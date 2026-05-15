@@ -120,6 +120,28 @@ export interface CreateSubmissionResponse {
   };
 }
 
+export interface CreateLocalFormRequest {
+  title: string;
+  description?: string | null;
+}
+
+export interface CreateLocalFormResponse {
+  ok: boolean;
+  message: string;
+  form: {
+    id: number;
+    title: string;
+    description: string | null;
+    active: number;
+    scope: 'local';
+    status: 'draft' | 'active' | 'archived';
+    owner_user_id: number;
+    allow_self_assignment: number;
+    created_by: number;
+    created_at: string;
+  };
+}
+
 export interface UseAvailableFormResponse {
   ok: boolean;
   message: string;
@@ -146,6 +168,10 @@ export class MunicipioService {
 
   getAvailableForms(): Observable<MunicipioAvailableFormsResponse> {
     return this.http.get<MunicipioAvailableFormsResponse>('/api/municipio/available-forms');
+  }
+
+  createLocalForm(payload: CreateLocalFormRequest): Observable<CreateLocalFormResponse> {
+    return this.http.post<CreateLocalFormResponse>('/api/municipio/forms', payload);
   }
 
   getFormDetail(formId: number): Observable<MunicipioFormDetailResponse> {

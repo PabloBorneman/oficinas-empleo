@@ -31,6 +31,11 @@ export class MunicipioHomeComponent implements OnInit {
   availableForms: MunicipioAvailableForm[] = [];
   usingFormId: number | null = null;
 
+  showCreateForm = false;
+  creatingForm = false;
+  createFormErrorMessage = '';
+  createFormSuccessMessage = '';
+
   ngOnInit(): void {
     this.loadMyForms();
     this.loadAvailableForms();
@@ -66,6 +71,61 @@ export class MunicipioHomeComponent implements OnInit {
       error: (error) => {
         this.availableErrorMessage = error?.error?.message || 'No se pudieron cargar las plantillas disponibles.';
         this.loadingAvailable = false;
+      }
+    });
+  }
+
+  toggleCreateForm(): void {
+    this.showCreateForm = !this.showCreateForm;
+    this.createFormErrorMessage = '';
+    this.createFormSuccessMessage = '';
+  }
+
+  createLocalForm(
+    title: string,
+    description: string,
+    titleInput?: HTMLInputElement,
+    descriptionInput?: HTMLTextAreaElement
+  ): void {
+    const cleanTitle = String(title || '').trim();
+    const cleanDescription = String(description || '').trim();
+
+    this.createFormErrorMessage = '';
+    this.createFormSuccessMessage = '';
+
+    if (!cleanTitle) {
+      this.createFormErrorMessage = 'El título del relevamiento es obligatorio.';
+      return;
+    }
+
+    this.creatingForm = true;
+
+    this.municipioService.createLocalForm({
+      title: cleanTitle,
+      description: cleanDescription || null
+    }).subscribe({
+      next: (response) => {
+        this.creatingForm = false;
+        this.createFormSuccessMessage = 'Relevamiento local creado correctamente. Ahora aparece en tus relevamientos asignados.';
+
+        if (titleInput) {
+          titleInput.value = '';
+        }
+
+        if (descriptionInput) {
+          descriptionInput.value = '';
+        }
+
+        this.loadMyForms();
+        this.loadAvailableForms();
+
+        if (response.form?.id) {
+          this.router.navigate(['/municipio/forms', response.form.id]);
+        }
+      },
+      error: (error) => {
+        this.creatingForm = false;
+        this.createFormErrorMessage = error?.error?.message || 'No se pudo crear el relevamiento local.';
       }
     });
   }
