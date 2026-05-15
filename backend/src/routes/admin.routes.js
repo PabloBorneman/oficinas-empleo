@@ -355,6 +355,23 @@ router.post('/forms/:formId/fields', async (req, res) => {
       ? JSON.stringify(options)
       : null;
 
+
+    const submissionsCountResult = await db.get(
+      `
+      SELECT COUNT(*) AS total
+      FROM submissions
+      WHERE form_id = ?
+      `,
+      [formId]
+    );
+
+    if (Number(submissionsCountResult?.total || 0) > 0) {
+      return res.status(409).json({
+        ok: false,
+        message: 'No se pueden modificar los campos porque el relevamiento ya tiene respuestas cargadas. Para cambiar la estructura, crea un nuevo relevamiento.'
+      });
+    }
+
     const result = await db.run(
       `
       INSERT INTO form_fields (
