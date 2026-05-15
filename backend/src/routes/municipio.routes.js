@@ -399,6 +399,7 @@ router.get('/forms/:formId/submissions', async (req, res) => {
 });
 
 
+
 router.get('/available-forms', async (req, res) => {
   try {
     const db = await getDatabase();
@@ -414,6 +415,9 @@ router.get('/available-forms', async (req, res) => {
         forms.active,
         forms.allow_self_assignment,
         forms.created_at,
+        forms.owner_user_id,
+        users.name AS created_by_name,
+        users.municipality_name AS created_by_municipality,
         COUNT(DISTINCT form_fields.id) AS fields_count,
         CASE
           WHEN form_assignments.id IS NULL THEN 0
@@ -421,6 +425,7 @@ router.get('/available-forms', async (req, res) => {
         END AS already_assigned,
         COUNT(DISTINCT submissions.id) AS my_submissions_count
       FROM forms
+      LEFT JOIN users ON users.id = forms.created_by
       LEFT JOIN form_fields ON form_fields.form_id = forms.id
       LEFT JOIN form_assignments
         ON form_assignments.form_id = forms.id
@@ -428,7 +433,14 @@ router.get('/available-forms', async (req, res) => {
       LEFT JOIN submissions
         ON submissions.form_id = forms.id
         AND submissions.user_id = ?
-      WHERE forms.scope = 'official'
+      WHERE (
+          forms.scope = 'official'
+          OR (
+            forms.scope = 'local'
+            AND forms.owner_user_id IS NOT NULL
+            AND forms.owner_user_id <> ?
+          )
+        )
         AND forms.status = 'active'
         AND forms.active = 1
         AND forms.allow_self_assignment = 1
@@ -441,10 +453,13 @@ router.get('/available-forms', async (req, res) => {
         forms.active,
         forms.allow_self_assignment,
         forms.created_at,
+        forms.owner_user_id,
+        users.name,
+        users.municipality_name,
         form_assignments.id
       ORDER BY forms.title ASC;
       `,
-      [req.user.id, req.user.id]
+      [req.user.id, req.user.id, req.user.id]
     );
 
     const normalizedForms = forms.map((form) => ({
@@ -458,14 +473,15 @@ router.get('/available-forms', async (req, res) => {
       forms: normalizedForms
     });
   } catch (error) {
-    console.error('Error listando relevamientos oficiales disponibles:', error);
+    console.error('Error listando relevamientos disponibles:', error);
 
     return res.status(500).json({
       ok: false,
-      message: 'Error interno del servidor'
+      message: 'Error interno al listar relevamientos disponibles'
     });
   }
 });
+
 
 router.post('/forms/:formId/use', async (req, res) => {
   try {
@@ -474,7 +490,7 @@ router.post('/forms/:formId/use', async (req, res) => {
     if (!formId) {
       return res.status(400).json({
         ok: false,
-        message: 'formId invalido'
+        message: 'ID de relevamiento invalido'
       });
     }
 
@@ -489,7 +505,8 @@ router.post('/forms/:formId/use', async (req, res) => {
         scope,
         status,
         active,
-        allow_self_assignment
+        allow_self_assignment,
+        owner_user_id
       FROM forms
       WHERE id = ?
       `,
@@ -503,12 +520,20 @@ router.post('/forms/:formId/use', async (req, res) => {
       });
     }
 
-    if (
-      form.scope !== 'official' ||
-      form.status !== 'active' ||
-      form.active !== 1 ||
-      form.allow_self_assignment !== 1
-    ) {
+    const canUseOfficial =
+      form.scope === 'official' &&
+      form.status === 'active' &&
+      form.active === 1 &&
+      form.allow_self_assignment === 1;
+
+    const canUseSharedLocal =
+      form.scope === 'local' &&
+      form.status === 'active' &&
+      form.active === 1 &&
+      form.allow_self_assignment === 1 &&
+      form.owner_user_id !== req.user.id;
+
+    if (!canUseOfficial && !canUseSharedLocal) {
       return res.status(403).json({
         ok: false,
         message: 'Este relevamiento no esta disponible para uso automatico por municipios'
@@ -532,9 +557,7 @@ router.post('/forms/:formId/use', async (req, res) => {
     if (existingAssignment) {
       return res.json({
         ok: true,
-        message: 'El relevamiento ya estaba habilitado para este municipio',
-        already_assigned: true,
-        form,
+        message: 'El relevamiento ya estaba asignado a tu municipio',
         assignment: existingAssignment
       });
     }
@@ -569,38 +592,37 @@ router.post('/forms/:formId/use', async (req, res) => {
 
     return res.status(201).json({
       ok: true,
-      message: 'Relevamiento habilitado correctamente para este municipio',
-      already_assigned: false,
-      form,
+      message: 'Relevamiento asignado correctamente a tu municipio',
       assignment
     });
   } catch (error) {
-    console.error('Error habilitando relevamiento oficial:', error);
+    console.error('Error usando relevamiento disponible:', error);
 
     return res.status(500).json({
       ok: false,
-      message: 'Error interno del servidor'
+      message: 'Error interno al usar relevamiento disponible'
     });
   }
 });
 
+
 router.post('/forms', async (req, res) => {
+  const db = await getDatabase();
+
   try {
     const {
       title,
       description
     } = req.body;
 
-    if (!title) {
+    if (!title || !String(title).trim()) {
       return res.status(400).json({
         ok: false,
         message: 'El titulo del relevamiento es obligatorio'
       });
     }
 
-    const db = await getDatabase();
-
-    await db.exec('BEGIN TRANSACTION;');
+    await db.exec('BEGIN;');
 
     const result = await db.run(
       `
@@ -617,14 +639,14 @@ router.post('/forms', async (req, res) => {
       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
       `,
       [
-        title,
+        String(title).trim(),
         description || null,
         1,
         req.user.id,
         'local',
         'active',
         req.user.id,
-        0
+        1
       ]
     );
 
@@ -668,16 +690,15 @@ router.post('/forms', async (req, res) => {
       form: createdForm
     });
   } catch (error) {
-    console.error('Error creando relevamiento local:', error);
-
     try {
-      const db = await getDatabase();
       await db.exec('ROLLBACK;');
     } catch (_) {}
 
+    console.error('Error creando relevamiento local:', error);
+
     return res.status(500).json({
       ok: false,
-      message: 'Error interno del servidor'
+      message: 'Error interno al crear relevamiento local'
     });
   }
 });
@@ -1025,6 +1046,7 @@ router.get('/forms/:formId/submissions/detail', async (req, res) => {
   }
 });
 module.exports = router;
+
 
 
 
