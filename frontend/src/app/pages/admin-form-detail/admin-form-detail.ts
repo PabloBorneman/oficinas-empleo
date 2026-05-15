@@ -68,6 +68,10 @@ export class AdminFormDetailComponent implements OnInit {
   submissionsErrorMessage = '';
   submissionsResponse: AdminFormSubmissionsResponse | null = null;
 
+  archivingForm = false;
+  archiveSuccessMessage = '';
+  archiveErrorMessage = '';
+
   submissionSearchTerm = '';
   selectedSubmissionMunicipality = '';
 
@@ -391,6 +395,37 @@ export class AdminFormDetailComponent implements OnInit {
     ]
       .join(' ')
       .toLowerCase();
+  }
+
+  archiveForm(): void {
+    if (!this.detail || this.archivingForm) {
+      return;
+    }
+
+    const confirmed = window.confirm(
+      '¿Seguro que querés archivar este relevamiento? Se conservarán las respuestas y estadísticas, pero los municipios ya no podrán cargar nuevas respuestas.'
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    this.archivingForm = true;
+    this.archiveSuccessMessage = '';
+    this.archiveErrorMessage = '';
+
+    this.adminService.archiveForm(this.formId).subscribe({
+      next: (response) => {
+        this.archivingForm = false;
+        this.archiveSuccessMessage = response.message || 'Relevamiento archivado correctamente.';
+        this.loadDetail(this.formId);
+        this.loadSubmissions();
+      },
+      error: (error) => {
+        this.archivingForm = false;
+        this.archiveErrorMessage = error?.error?.message || 'No se pudo archivar el relevamiento.';
+      }
+    });
   }
 
   loadSubmissions(): void {

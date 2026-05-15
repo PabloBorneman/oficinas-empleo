@@ -979,6 +979,97 @@ router.get('/forms/:formId/comparison', async (req, res) => {
   }
 });
 
+
+router.patch('/forms/:formId/archive', async (req, res) => {
+  try {
+    const formId = Number(req.params.formId);
+
+    if (!formId) {
+      return res.status(400).json({
+        ok: false,
+        message: 'formId invalido'
+      });
+    }
+
+    const db = await getDatabase();
+
+    const form = await db.get(
+      `
+      SELECT
+        id,
+        title,
+        description,
+        active,
+        scope,
+        status,
+        owner_user_id,
+        allow_self_assignment,
+        created_by,
+        created_at
+      FROM forms
+      WHERE id = ?
+      `,
+      [formId]
+    );
+
+    if (!form) {
+      return res.status(404).json({
+        ok: false,
+        message: 'Relevamiento no encontrado'
+      });
+    }
+
+    if (form.status === 'archived') {
+      return res.json({
+        ok: true,
+        message: 'El relevamiento ya estaba archivado',
+        form
+      });
+    }
+
+    await db.run(
+      `
+      UPDATE forms
+      SET status = 'archived'
+      WHERE id = ?
+      `,
+      [formId]
+    );
+
+    const archivedForm = await db.get(
+      `
+      SELECT
+        id,
+        title,
+        description,
+        active,
+        scope,
+        status,
+        owner_user_id,
+        allow_self_assignment,
+        created_by,
+        created_at
+      FROM forms
+      WHERE id = ?
+      `,
+      [formId]
+    );
+
+    return res.json({
+      ok: true,
+      message: 'Relevamiento archivado correctamente',
+      form: archivedForm
+    });
+  } catch (error) {
+    console.error('Error archivando relevamiento:', error);
+
+    return res.status(500).json({
+      ok: false,
+      message: 'Error interno al archivar relevamiento'
+    });
+  }
+});
+
 router.get('/dashboard/forms', async (req, res) => {
   try {
     const db = await getDatabase();

@@ -215,6 +215,12 @@ export interface CreateAdminUserResponse {
   user: AdminUser;
 }
 
+export interface ArchiveAdminFormResponse {
+  ok: boolean;
+  message: string;
+  form: AdminFormDetail;
+}
+
 export interface AssignFormUsersRequest {
   user_ids: number[];
 }
@@ -257,6 +263,10 @@ export class AdminService {
 
   getFormSubmissions(formId: number): Observable<AdminFormSubmissionsResponse> {
     return this.http.get<AdminFormSubmissionsResponse>(`/api/admin/forms/${formId}/submissions`);
+  }
+
+  archiveForm(formId: number): Observable<ArchiveAdminFormResponse> {
+    return this.http.patch<ArchiveAdminFormResponse>(`/api/admin/forms/${formId}/archive`, {});
   }
 
   getUsers(): Observable<AdminUsersResponse> {

@@ -51,6 +51,43 @@
       </article>
     </section>
 
+    <section class="archive-panel">
+      <div>
+        <p class="eyebrow">Estado del relevamiento</p>
+
+        @if (detail.form.status === 'archived') {
+          <h2>Relevamiento archivado</h2>
+          <p>
+            Este relevamiento conserva sus respuestas y estadísticas, pero ya no debería recibir nuevas cargas.
+          </p>
+        } @else {
+          <h2>Relevamiento {{ getStatusLabel(detail.form.status) }}</h2>
+          <p>
+            Podés archivar este relevamiento cuando finalice el período de carga. No se eliminan respuestas ni estadísticas.
+          </p>
+        }
+
+        @if (archiveSuccessMessage) {
+          <p class="success-text">{{ archiveSuccessMessage }}</p>
+        }
+
+        @if (archiveErrorMessage) {
+          <p class="error-text">{{ archiveErrorMessage }}</p>
+        }
+      </div>
+
+      @if (detail.form.status !== 'archived') {
+        <button
+          type="button"
+          class="archive-button"
+          [disabled]="archivingForm"
+          (click)="archiveForm()"
+        >
+          {{ archivingForm ? 'Archivando...' : 'Archivar relevamiento' }}
+        </button>
+      }
+    </section>
+
     <section class="field-panel">
       <div class="field-panel-header">
         <div>

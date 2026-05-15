@@ -871,3 +871,65 @@ h2 {
     width: 100%;
   }
 }
+
+
+.archive-panel {
+  max-width: 1180px;
+  margin: 0 auto 20px;
+  padding: 22px;
+  border-radius: 22px;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  box-shadow: 0 14px 35px rgba(15, 23, 42, 0.06);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.archive-panel h2 {
+  margin: 0 0 8px;
+  color: #7c2d12;
+}
+
+.archive-panel p {
+  margin: 0;
+  color: #9a3412;
+  line-height: 1.5;
+}
+
+.archive-panel .success-text,
+.archive-panel .error-text {
+  margin-top: 10px;
+}
+
+.archive-button {
+  border: 0;
+  border-radius: 14px;
+  padding: 13px 18px;
+  background: #c2410c;
+  color: #ffffff;
+  font-weight: 800;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.archive-button:hover {
+  background: #9a3412;
+}
+
+.archive-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+@media (max-width: 800px) {
+  .archive-panel {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .archive-button {
+    width: 100%;
+  }
+}
