@@ -68,6 +68,9 @@ export class AdminFormDetailComponent implements OnInit {
   submissionsErrorMessage = '';
   submissionsResponse: AdminFormSubmissionsResponse | null = null;
 
+  submissionSearchTerm = '';
+  selectedSubmissionMunicipality = '';
+
   ngOnInit(): void {
     const formId = Number(this.route.snapshot.paramMap.get('id'));
 
@@ -323,6 +326,73 @@ export class AdminFormDetailComponent implements OnInit {
   formatText(text: string | null): string {
     return this.fixEncodingText(text || '');
   }
+  get allSubmissions() {
+    return this.submissionsResponse?.submissions || [];
+  }
+
+  get availableSubmissionMunicipalities(): string[] {
+    const municipalities = this.allSubmissions
+      .map((submission) => this.formatAdminText(submission.municipality_name || ''))
+      .filter((municipality) => municipality.length > 0);
+
+    return Array.from(new Set(municipalities)).sort((a, b) => a.localeCompare(b));
+  }
+
+  get filteredSubmissions() {
+    const search = this.submissionSearchTerm.trim().toLowerCase();
+    const municipality = this.selectedSubmissionMunicipality.trim().toLowerCase();
+
+    return this.allSubmissions.filter((submission) => {
+      const submissionMunicipality = this.formatAdminText(submission.municipality_name || '').toLowerCase();
+
+      const matchesMunicipality =
+        !municipality ||
+        submissionMunicipality === municipality;
+
+      const matchesSearch =
+        !search ||
+        this.getSubmissionSearchText(submission).includes(search);
+
+      return matchesMunicipality && matchesSearch;
+    });
+  }
+
+  onSubmissionSearchInput(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    this.submissionSearchTerm = input.value;
+  }
+
+  onSubmissionMunicipalityChange(event: Event): void {
+    const select = event.target as HTMLSelectElement;
+    this.selectedSubmissionMunicipality = select.value;
+  }
+
+  clearSubmissionFilters(): void {
+    this.submissionSearchTerm = '';
+    this.selectedSubmissionMunicipality = '';
+  }
+
+  getSubmissionSearchText(submission: AdminFormSubmissionsResponse['submissions'][number]): string {
+    const valuesText = submission.values
+      .map((value) => {
+        return [
+          this.formatAdminText(value.label),
+          this.formatAdminSubmissionValue(value)
+        ].join(' ');
+      })
+      .join(' ');
+
+    return [
+      submission.id,
+      this.formatAdminText(submission.municipality_name || ''),
+      submission.username || '',
+      submission.created_at || '',
+      valuesText
+    ]
+      .join(' ')
+      .toLowerCase();
+  }
+
   loadSubmissions(): void {
     this.submissionsLoading = true;
     this.submissionsErrorMessage = '';
@@ -340,7 +410,7 @@ export class AdminFormDetailComponent implements OnInit {
   }
 
   exportSubmissionsCsv(): void {
-    const submissions = this.submissionsResponse?.submissions || [];
+    const submissions = this.filteredSubmissions;
 
     if (submissions.length === 0) {
       return;

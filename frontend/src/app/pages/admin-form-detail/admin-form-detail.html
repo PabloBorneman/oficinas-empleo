@@ -283,12 +283,48 @@
           <p>Listado de respuestas individuales cargadas por las oficinas municipales.</p>
         </div>
 
-        @if ((submissionsResponse?.submissions?.length || 0) > 0) {
+        @if (filteredSubmissions.length > 0) {
           <button type="button" class="export-button" (click)="exportSubmissionsCsv()">
             Exportar CSV
           </button>
         }
       </div>
+
+      @if (!submissionsLoading && !submissionsErrorMessage && allSubmissions.length > 0) {
+        <div class="submissions-filters">
+          <label>
+            <span>Buscar</span>
+            <input
+              type="text"
+              placeholder="Buscar por municipio, respuesta, valor..."
+              [value]="submissionSearchTerm"
+              (input)="onSubmissionSearchInput($event)"
+            />
+          </label>
+
+          <label>
+            <span>Municipio</span>
+            <select
+              [value]="selectedSubmissionMunicipality"
+              (change)="onSubmissionMunicipalityChange($event)"
+            >
+              <option value="">Todos los municipios</option>
+
+              @for (municipality of availableSubmissionMunicipalities; track municipality) {
+                <option [value]="municipality">{{ municipality }}</option>
+              }
+            </select>
+          </label>
+
+          <button type="button" class="clear-filters-button" (click)="clearSubmissionFilters()">
+            Limpiar filtros
+          </button>
+        </div>
+
+        <p class="filter-count">
+          Mostrando {{ filteredSubmissions.length }} de {{ allSubmissions.length }} respuestas.
+        </p>
+      }
 
       @if (submissionsLoading) {
         <p class="empty">Cargando respuestas...</p>
@@ -298,12 +334,16 @@
         <p class="error-text">{{ submissionsErrorMessage }}</p>
       }
 
-      @if (!submissionsLoading && !submissionsErrorMessage && submissionsResponse?.submissions?.length === 0) {
+      @if (!submissionsLoading && !submissionsErrorMessage && allSubmissions.length === 0) {
         <p class="empty">Todavía no hay respuestas cargadas para este relevamiento.</p>
       }
 
+      @if (!submissionsLoading && !submissionsErrorMessage && allSubmissions.length > 0 && filteredSubmissions.length === 0) {
+        <p class="empty">No hay respuestas que coincidan con los filtros aplicados.</p>
+      }
+
       <div class="admin-submissions-list">
-        @for (submission of submissionsResponse?.submissions; track submission.id) {
+        @for (submission of filteredSubmissions; track submission.id) {
           <article class="admin-submission-card">
             <div class="admin-submission-title">
               <div>

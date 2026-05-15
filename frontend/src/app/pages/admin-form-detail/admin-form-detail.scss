@@ -802,3 +802,72 @@ h2 {
     width: 100%;
   }
 }
+
+
+.submissions-filters {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr auto;
+  gap: 12px;
+  align-items: end;
+  margin-bottom: 12px;
+  padding: 14px;
+  border-radius: 18px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+}
+
+.submissions-filters label {
+  display: grid;
+  gap: 7px;
+  color: #334155;
+  font-weight: 800;
+}
+
+.submissions-filters input,
+.submissions-filters select {
+  width: 100%;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  padding: 11px 12px;
+  font: inherit;
+  color: #0f172a;
+  background: #ffffff;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.submissions-filters input:focus,
+.submissions-filters select:focus {
+  border-color: #005b96;
+  box-shadow: 0 0 0 4px rgba(0, 91, 150, 0.12);
+}
+
+.clear-filters-button {
+  border: 0;
+  border-radius: 12px;
+  padding: 12px 14px;
+  background: #475569;
+  color: #ffffff;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.clear-filters-button:hover {
+  background: #334155;
+}
+
+.filter-count {
+  margin: 0 0 16px;
+  color: #475569;
+  font-weight: 800;
+}
+
+@media (max-width: 800px) {
+  .submissions-filters {
+    grid-template-columns: 1fr;
+  }
+
+  .clear-filters-button {
+    width: 100%;
+  }
+}
