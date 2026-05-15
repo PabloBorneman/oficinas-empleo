@@ -21,7 +21,10 @@ export interface MunicipioAvailableForm {
   id: number;
   title: string;
   description: string | null;
-  scope: 'official';
+  scope: 'official' | 'local';
+  owner_user_id: number | null;
+  created_by_name: string | null;
+  created_by_municipality: string | null;
   status: 'draft' | 'active' | 'archived';
   active: number;
   allow_self_assignment: number;
@@ -117,6 +120,20 @@ export interface CreateSubmissionResponse {
   };
 }
 
+export interface UseAvailableFormResponse {
+  ok: boolean;
+  message: string;
+  assignment?: {
+    id: number;
+    form_id: number;
+    user_id: number;
+    user_name?: string;
+    username?: string;
+    municipality_name?: string;
+    assigned_at: string;
+  };
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -141,5 +158,9 @@ export class MunicipioService {
 
   createSubmission(formId: number, payload: CreateSubmissionRequest): Observable<CreateSubmissionResponse> {
     return this.http.post<CreateSubmissionResponse>(`/api/municipio/forms/${formId}/submissions`, payload);
+  }
+
+  useAvailableForm(formId: number): Observable<UseAvailableFormResponse> {
+    return this.http.post<UseAvailableFormResponse>(`/api/municipio/forms/${formId}/use`, {});
   }
 }

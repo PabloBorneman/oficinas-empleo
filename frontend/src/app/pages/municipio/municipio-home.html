@@ -4,7 +4,7 @@
       <p class="eyebrow">Panel Oficina de Empleo</p>
       <h1>{{ municipalityName || user?.municipality_name || user?.name }}</h1>
       <p class="subtitle">
-        Desde acá la oficina municipal puede ver sus relevamientos asignados, consultar plantillas oficiales
+        Desde acá la oficina municipal puede ver sus relevamientos asignados, consultar plantillas oficiales o compartidas
         y cargar respuestas propias.
       </p>
     </div>
@@ -19,7 +19,7 @@
     </article>
 
     <article class="summary-card">
-      <span>Plantillas oficiales</span>
+      <span>Plantillas disponibles</span>
       <strong>{{ availableForms.length }}</strong>
     </article>
 
@@ -78,8 +78,8 @@
     <article class="panel">
       <div class="section-header">
         <div>
-          <p class="eyebrow blue">Plantillas oficiales</p>
-          <h2>Disponibles del Ministerio</h2>
+          <p class="eyebrow blue">Plantillas disponibles</p>
+          <h2>Oficiales y compartidas por otras oficinas</h2>
         </div>
       </div>
 
@@ -92,36 +92,49 @@
       }
 
       @if (!loadingAvailable && !availableErrorMessage && availableForms.length === 0) {
-        <p class="state-text">No hay plantillas oficiales disponibles por ahora.</p>
+        <p class="state-text">No hay plantillas disponibles por ahora.</p>
       }
 
       <div class="cards-list">
         @for (form of availableForms; track form.id) {
           <article class="form-card">
             <div class="form-card-header">
-              <span class="badge official">Oficial</span>
-              <span class="status">{{ getStatusLabel(form.status) }}</span>
+              <span
+                class="badge"
+                [class.official]="form.scope === 'official'"
+                [class.local]="form.scope === 'local'"
+              >
+                {{ getAvailableTypeLabel(form) }}
+              </span>
+
+              <span class="status">{{ getAssignedLabel(form) }}</span>
             </div>
 
             <h3>{{ form.title }}</h3>
 
-            <p>{{ form.description || 'Sin descripción cargada.' }}</p>
+            @if (form.description) {
+              <p>{{ form.description }}</p>
+            }
 
-            <div class="metrics">
-              <div>
-                <strong>{{ form.fields_count }}</strong>
-                <span>Campos</span>
-              </div>
-
-              <div>
-                <strong>{{ form.my_submissions_count }}</strong>
-                <span>Mis respuestas</span>
-              </div>
+            <div class="meta">
+              <span>Estado: {{ getStatusLabel(form.status) }}</span>
+              <span>Campos: {{ form.fields_count }}</span>
+              <span>Mis respuestas: {{ form.my_submissions_count }}</span>
+              <span class="creator-line">Creado por: {{ getAvailableCreatorLabel(form) }}</span>
             </div>
 
-            <div class="assignment-state" [class.ok]="form.already_assigned">
-              {{ getAssignedLabel(form) }}
-            </div>
+            <button
+              type="button"
+              class="primary-button"
+              [disabled]="usingFormId === form.id"
+              (click)="useTemplate(form)"
+            >
+              @if (usingFormId === form.id) {
+                Procesando...
+              } @else {
+                {{ form.already_assigned ? 'Ver / cargar respuestas' : 'Usar plantilla' }}
+              }
+            </button>
           </article>
         }
       </div>

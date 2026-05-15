@@ -29,6 +29,7 @@ export class MunicipioHomeComponent implements OnInit {
 
   assignedForms: MunicipioAssignedForm[] = [];
   availableForms: MunicipioAvailableForm[] = [];
+  usingFormId: number | null = null;
 
   ngOnInit(): void {
     this.loadMyForms();
@@ -63,10 +64,44 @@ export class MunicipioHomeComponent implements OnInit {
         this.loadingAvailable = false;
       },
       error: (error) => {
-        this.availableErrorMessage = error?.error?.message || 'No se pudieron cargar las plantillas oficiales.';
+        this.availableErrorMessage = error?.error?.message || 'No se pudieron cargar las plantillas disponibles.';
         this.loadingAvailable = false;
       }
     });
+  }
+
+  useTemplate(form: MunicipioAvailableForm): void {
+    if (form.already_assigned) {
+      this.viewForm(form.id);
+      return;
+    }
+
+    this.usingFormId = form.id;
+    this.availableErrorMessage = '';
+
+    this.municipioService.useAvailableForm(form.id).subscribe({
+      next: () => {
+        this.usingFormId = null;
+        this.loadMyForms();
+        this.loadAvailableForms();
+      },
+      error: (error) => {
+        this.availableErrorMessage = error?.error?.message || 'No se pudo usar esta plantilla.';
+        this.usingFormId = null;
+      }
+    });
+  }
+
+  getAvailableTypeLabel(form: MunicipioAvailableForm): string {
+    return form.scope === 'local' ? 'Municipal' : 'Oficial';
+  }
+
+  getAvailableCreatorLabel(form: MunicipioAvailableForm): string {
+    if (form.scope === 'official') {
+      return form.created_by_name || 'Ministerio';
+    }
+
+    return form.created_by_municipality || form.created_by_name || 'Otra oficina municipal';
   }
 
   viewForm(formId: number): void {
