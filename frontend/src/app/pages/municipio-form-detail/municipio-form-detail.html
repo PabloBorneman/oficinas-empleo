@@ -27,6 +27,9 @@
 
       <div class="chips">
         <span class="chip">Municipio: {{ detail.municipality_name }}</span>
+        <span class="chip status-chip" [class.draft]="detail.form.status === 'draft'" [class.archived]="detail.form.status === 'archived'">
+          Estado: {{ getFormStatusLabel(detail.form.status) }}
+        </span>
         <span class="chip muted">Campos: {{ detail.fields.length }}</span>
         <span class="chip muted">Asignado: {{ detail.form.assigned_at }}</span>
       </div>
@@ -110,6 +113,23 @@
           </div>
         }
 
+        @if (detail.form.can_edit_fields === 1 && detail.form.status === 'draft') {
+          <div class="draft-actions">
+            <p>
+              Este relevamiento está en borrador. Agregá los campos necesarios y activalo cuando esté listo para recibir respuestas.
+            </p>
+
+            <button
+              type="button"
+              class="primary-button"
+              [disabled]="activatingForm || detail.fields.length === 0"
+              (click)="activateForm()"
+            >
+              {{ activatingForm ? 'Activando...' : 'Activar relevamiento' }}
+            </button>
+          </div>
+        }
+
         @if (detail.fields.length === 0) {
           <p class="empty">Todavía no hay campos cargados para este relevamiento.</p>
         }
@@ -136,11 +156,23 @@
           </div>
 
           @if (!showSubmissionForm) {
-            <button type="button" class="primary-button" [disabled]="detail.fields.length === 0" (click)="openSubmissionForm()">
+            <button type="button" class="primary-button" [disabled]="!canCreateSubmission()" (click)="openSubmissionForm()">
               Nueva respuesta
             </button>
           }
         </div>
+
+        @if (detail.form.status === 'draft') {
+          <p class="permission-notice">
+            Este relevamiento todavía está en borrador. Activá el relevamiento para poder cargar respuestas.
+          </p>
+        }
+
+        @if (detail.form.status === 'archived') {
+          <p class="permission-notice">
+            Este relevamiento está archivado. Podés consultar la información, pero no cargar nuevas respuestas.
+          </p>
+        }
 
         @if (submissionSuccessMessage) {
           <p class="success-text">{{ submissionSuccessMessage }}</p>

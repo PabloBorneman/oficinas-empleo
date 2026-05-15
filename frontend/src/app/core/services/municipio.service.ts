@@ -166,6 +166,12 @@ export interface CreateLocalFormResponse {
   };
 }
 
+export interface ActivateLocalFormResponse {
+  ok: boolean;
+  message: string;
+  form: MunicipioFormDetail;
+}
+
 export interface UseAvailableFormResponse {
   ok: boolean;
   message: string;
@@ -204,6 +210,10 @@ export class MunicipioService {
 
   createLocalFormField(formId: number, payload: CreateLocalFieldRequest): Observable<CreateLocalFieldResponse> {
     return this.http.post<CreateLocalFieldResponse>(`/api/municipio/forms/${formId}/fields`, payload);
+  }
+
+  activateLocalForm(formId: number): Observable<ActivateLocalFormResponse> {
+    return this.http.patch<ActivateLocalFormResponse>(`/api/municipio/forms/${formId}/activate`, {});
   }
 
   getFormSubmissionsDetail(formId: number): Observable<MunicipioSubmissionsDetailResponse> {

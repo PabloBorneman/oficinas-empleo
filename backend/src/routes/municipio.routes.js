@@ -239,7 +239,9 @@ router.post('/forms/:formId/submissions', async (req, res) => {
 
     const assignedForm = await db.get(
       `
-      SELECT forms.id
+      SELECT
+        forms.id,
+        forms.status
       FROM form_assignments
       INNER JOIN forms ON forms.id = form_assignments.form_id
       WHERE form_assignments.user_id = ?
@@ -253,6 +255,13 @@ router.post('/forms/:formId/submissions', async (req, res) => {
       return res.status(404).json({
         ok: false,
         message: 'Relevamiento no encontrado o no asignado a este municipio'
+      });
+    }
+
+    if (assignedForm.status !== 'active') {
+      return res.status(409).json({
+        ok: false,
+        message: 'El relevamiento debe estar activo para cargar respuestas'
       });
     }
 
@@ -652,7 +661,7 @@ router.post('/forms', async (req, res) => {
         1,
         req.user.id,
         'local',
-        'active',
+        'draft',
         req.user.id,
         1
       ]
@@ -707,6 +716,122 @@ router.post('/forms', async (req, res) => {
     return res.status(500).json({
       ok: false,
       message: 'Error interno al crear relevamiento local'
+    });
+  }
+});
+
+
+router.patch('/forms/:formId/activate', async (req, res) => {
+  try {
+    const formId = Number(req.params.formId);
+
+    if (!formId) {
+      return res.status(400).json({
+        ok: false,
+        message: 'ID de relevamiento invalido'
+      });
+    }
+
+    const db = await getDatabase();
+
+    const form = await db.get(
+      `
+      SELECT
+        id,
+        title,
+        description,
+        scope,
+        status,
+        active,
+        owner_user_id
+      FROM forms
+      WHERE id = ?
+      `,
+      [formId]
+    );
+
+    if (!form) {
+      return res.status(404).json({
+        ok: false,
+        message: 'Relevamiento no encontrado'
+      });
+    }
+
+    if (form.scope !== 'local' || form.owner_user_id !== req.user.id) {
+      return res.status(403).json({
+        ok: false,
+        message: 'Solo podés activar relevamientos locales creados por tu municipio'
+      });
+    }
+
+    if (form.active !== 1) {
+      return res.status(400).json({
+        ok: false,
+        message: 'No se puede activar un relevamiento inactivo'
+      });
+    }
+
+    if (form.status === 'archived') {
+      return res.status(409).json({
+        ok: false,
+        message: 'No se puede activar un relevamiento archivado'
+      });
+    }
+
+    const fieldsCount = await db.get(
+      `
+      SELECT COUNT(*) AS total
+      FROM form_fields
+      WHERE form_id = ?
+      `,
+      [formId]
+    );
+
+    if (Number(fieldsCount?.total || 0) === 0) {
+      return res.status(409).json({
+        ok: false,
+        message: 'Antes de activar el relevamiento tenés que agregar al menos un campo'
+      });
+    }
+
+    await db.run(
+      `
+      UPDATE forms
+      SET status = 'active'
+      WHERE id = ?
+      `,
+      [formId]
+    );
+
+    const updatedForm = await db.get(
+      `
+      SELECT
+        id,
+        title,
+        description,
+        active,
+        scope,
+        status,
+        owner_user_id,
+        created_by,
+        created_at
+      FROM forms
+      WHERE id = ?
+      `,
+      [formId]
+    );
+
+    return res.json({
+      ok: true,
+      message: 'Relevamiento activado correctamente',
+      form: updatedForm
+    });
+  } catch (error) {
+    console.error('Error activando relevamiento municipal:', error);
+
+    return res.status(500).json({
+      ok: false,
+      message: 'Error interno al activar relevamiento'
     });
   }
 });
@@ -1071,6 +1196,7 @@ router.get('/forms/:formId/submissions/detail', async (req, res) => {
   }
 });
 module.exports = router;
+
 
 
 

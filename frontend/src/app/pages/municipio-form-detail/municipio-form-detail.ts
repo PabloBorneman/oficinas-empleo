@@ -3,6 +3,7 @@ import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { ActivatedRoute, Router } from '@angular/router';
 import {
   CreateSubmissionRequest,
+  MunicipioFormDetail,
   MunicipioFormDetailResponse,
   MunicipioFormField,
   MunicipioService,
@@ -27,6 +28,7 @@ export class MunicipioFormDetailComponent implements OnInit {
   loadingSubmissions = true;
   savingSubmission = false;
   creatingField = false;
+  activatingForm = false;
 
   detailErrorMessage = '';
   submissionsErrorMessage = '';
@@ -87,6 +89,47 @@ export class MunicipioFormDetailComponent implements OnInit {
         this.loadingSubmissions = false;
       }
     });
+  }
+
+  activateForm(): void {
+    if (!this.detail || this.activatingForm) {
+      return;
+    }
+
+    if (this.detail.fields.length === 0) {
+      this.fieldErrorMessage = 'Antes de activar el relevamiento tenés que agregar al menos un campo.';
+      return;
+    }
+
+    this.activatingForm = true;
+    this.fieldErrorMessage = '';
+    this.fieldSuccessMessage = '';
+
+    this.municipioService.activateLocalForm(this.formId).subscribe({
+      next: () => {
+        this.activatingForm = false;
+        this.fieldSuccessMessage = 'Relevamiento activado correctamente. Ya puede recibir respuestas y compartirse como plantilla.';
+        this.loadDetail();
+      },
+      error: (error) => {
+        this.activatingForm = false;
+        this.fieldErrorMessage = error?.error?.message || 'No se pudo activar el relevamiento.';
+      }
+    });
+  }
+
+  getFormStatusLabel(status: MunicipioFormDetail['status']): string {
+    const labels: Record<MunicipioFormDetail['status'], string> = {
+      draft: 'Borrador',
+      active: 'Activo',
+      archived: 'Archivado'
+    };
+
+    return labels[status] || status;
+  }
+
+  canCreateSubmission(): boolean {
+    return !!this.detail && this.detail.form.status === 'active' && this.detail.fields.length > 0;
   }
 
   createLocalField(
@@ -358,3 +401,4 @@ export class MunicipioFormDetailComponent implements OnInit {
     return labels[type] || type;
   }
 }
+
