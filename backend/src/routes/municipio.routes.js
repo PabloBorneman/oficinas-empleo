@@ -158,15 +158,23 @@ router.get('/forms/:formId', async (req, res) => {
       forms.title,
       forms.description,
       forms.active,
+      forms.scope,
+      forms.status,
+      forms.owner_user_id,
+      forms.created_by,
       forms.created_at,
-      form_assignments.assigned_at
+      form_assignments.assigned_at,
+      CASE
+        WHEN forms.scope = 'local' AND forms.owner_user_id = ? THEN 1
+        ELSE 0
+      END AS can_edit_fields
     FROM form_assignments
     INNER JOIN forms ON forms.id = form_assignments.form_id
     WHERE form_assignments.user_id = ?
       AND forms.id = ?
       AND forms.active = 1
     `,
-    [req.user.id, formId]
+    [req.user.id, req.user.id, formId]
   );
 
   if (!assignedForm) {

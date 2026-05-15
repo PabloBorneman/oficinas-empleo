@@ -41,6 +41,7 @@
           </div>
         </div>
 
+        @if (detail.form.can_edit_fields === 1) {
         <form
           class="field-builder"
           (submit)="$event.preventDefault(); createLocalField(fieldLabelInput.value, fieldTypeSelect.value, fieldOptionsInput.value, fieldRequiredInput.checked, fieldLabelInput, fieldOptionsInput, fieldRequiredInput)"
@@ -97,6 +98,17 @@
             {{ creatingField ? 'Agregando...' : 'Agregar campo' }}
           </button>
         </form>
+        } @else {
+          <div class="permission-notice">
+            <strong>No podés modificar los campos de este relevamiento.</strong>
+
+            @if (detail.form.scope === 'official') {
+              <p>Esta es una plantilla oficial del Ministerio. Tu oficina puede cargar respuestas, pero no modificar su estructura.</p>
+            } @else {
+              <p>Esta plantilla fue creada por otra oficina municipal. Podés cargar respuestas propias, pero no agregar ni cambiar campos.</p>
+            }
+          </div>
+        }
 
         @if (detail.fields.length === 0) {
           <p class="empty">Todavía no hay campos cargados para este relevamiento.</p>

@@ -374,3 +374,24 @@ h3 {
     width: 100%;
   }
 }
+
+
+.permission-notice {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 18px;
+  padding: 14px;
+  border-radius: 16px;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  color: #9a3412;
+}
+
+.permission-notice strong {
+  color: #7c2d12;
+}
+
+.permission-notice p {
+  margin: 0;
+  line-height: 1.5;
+}

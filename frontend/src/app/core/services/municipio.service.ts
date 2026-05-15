@@ -7,6 +7,11 @@ export interface MunicipioAssignedForm {
   title: string;
   description: string | null;
   active: number;
+  scope: 'official' | 'local';
+  status: 'draft' | 'active' | 'archived';
+  owner_user_id: number | null;
+  created_by: number;
+  can_edit_fields: number;
   created_at: string;
   assigned_at: string;
 }
@@ -45,6 +50,11 @@ export interface MunicipioFormDetail {
   title: string;
   description: string | null;
   active: number;
+  scope: 'official' | 'local';
+  status: 'draft' | 'active' | 'archived';
+  owner_user_id: number | null;
+  created_by: number;
+  can_edit_fields: number;
   created_at: string;
   assigned_at: string;
 }
@@ -208,3 +218,4 @@ export class MunicipioService {
     return this.http.post<UseAvailableFormResponse>(`/api/municipio/forms/${formId}/use`, {});
   }
 }
+
