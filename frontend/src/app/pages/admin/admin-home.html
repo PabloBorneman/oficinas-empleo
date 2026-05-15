@@ -72,10 +72,15 @@
     </section>
   }
 
-  <section class="summary-grid">
+  <section class="summary-grid executive-summary">
     <article class="summary-card">
       <span>Total relevamientos</span>
       <strong>{{ forms.length }}</strong>
+    </article>
+
+    <article class="summary-card">
+      <span>Activos</span>
+      <strong>{{ activeFormsCount }}</strong>
     </article>
 
     <article class="summary-card">
@@ -84,10 +89,85 @@
     </article>
 
     <article class="summary-card">
-      <span>Locales</span>
+      <span>Municipales</span>
       <strong>{{ localFormsCount }}</strong>
     </article>
+
+    <article class="summary-card">
+      <span>Asignaciones</span>
+      <strong>{{ totalAssignmentsCount }}</strong>
+    </article>
+
+    <article class="summary-card highlight">
+      <span>Respuestas cargadas</span>
+      <strong>{{ totalSubmissionsCount }}</strong>
+    </article>
   </section>
+
+  @if (!loading && !errorMessage) {
+    <section class="executive-grid">
+      <article class="executive-card">
+        <div class="executive-header">
+          <div>
+            <p class="eyebrow">Actividad</p>
+            <h2>Relevamientos con más respuestas</h2>
+          </div>
+
+          <span class="mini-stat">{{ formsWithSubmissionsCount }} con datos</span>
+        </div>
+
+        @if (topFormsBySubmissions.length === 0) {
+          <p class="empty">Todavía no hay respuestas cargadas.</p>
+        }
+
+        <div class="ranking-list">
+          @for (form of topFormsBySubmissions; track form.id) {
+            <button type="button" class="ranking-item" (click)="viewDetail(form.id)">
+              <span>
+                <strong>{{ form.title }}</strong>
+                <small>{{ getScopeLabel(form.scope) }}</small>
+              </span>
+
+              <b>{{ form.submissions_count }}</b>
+            </button>
+          }
+        </div>
+      </article>
+
+      <article class="executive-card">
+        <div class="executive-header">
+          <div>
+            <p class="eyebrow">Seguimiento</p>
+            <h2>Relevamientos a revisar</h2>
+          </div>
+
+          <span class="mini-stat">{{ formsNeedingReview.length }} pendientes</span>
+        </div>
+
+        @if (formsNeedingReview.length === 0) {
+          <p class="empty">No hay relevamientos pendientes de revisión.</p>
+        }
+
+        <div class="review-list">
+          @for (form of formsNeedingReview; track form.id) {
+            <button type="button" class="review-item" (click)="viewDetail(form.id)">
+              <strong>{{ form.title }}</strong>
+
+              <span>
+                @if (form.fields_count === 0) {
+                  Sin campos
+                } @else if (form.assignments_count === 0) {
+                  Sin oficinas asignadas
+                } @else if (form.submissions_count === 0) {
+                  Sin respuestas
+                }
+              </span>
+            </button>
+          }
+        </div>
+      </article>
+    </section>
+  }
 
   @if (loading) {
     <section class="state-card">

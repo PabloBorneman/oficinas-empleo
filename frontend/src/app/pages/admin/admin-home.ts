@@ -45,6 +45,35 @@ export class AdminHomeComponent implements OnInit {
     return this.forms.filter((form) => form.scope === 'local').length;
   }
 
+  get activeFormsCount(): number {
+    return this.forms.filter((form) => form.status === 'active').length;
+  }
+
+  get totalSubmissionsCount(): number {
+    return this.forms.reduce((total, form) => total + Number(form.submissions_count || 0), 0);
+  }
+
+  get totalAssignmentsCount(): number {
+    return this.forms.reduce((total, form) => total + Number(form.assignments_count || 0), 0);
+  }
+
+  get formsWithSubmissionsCount(): number {
+    return this.forms.filter((form) => Number(form.submissions_count || 0) > 0).length;
+  }
+
+  get topFormsBySubmissions(): AdminDashboardForm[] {
+    return [...this.forms]
+      .filter((form) => Number(form.submissions_count || 0) > 0)
+      .sort((a, b) => Number(b.submissions_count || 0) - Number(a.submissions_count || 0))
+      .slice(0, 5);
+  }
+
+  get formsNeedingReview(): AdminDashboardForm[] {
+    return this.forms
+      .filter((form) => Number(form.fields_count || 0) === 0 || Number(form.assignments_count || 0) === 0 || Number(form.submissions_count || 0) === 0)
+      .slice(0, 5);
+  }
+
   ngOnInit(): void {
     this.loadDashboardForms();
   }

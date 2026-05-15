@@ -358,3 +358,131 @@ h2 {
     width: 100%;
   }
 }
+
+
+.executive-summary {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+
+.summary-card.highlight {
+  background: linear-gradient(135deg, #ecfdf5, #ffffff);
+  border-color: rgba(0, 128, 96, 0.22);
+}
+
+.executive-grid {
+  max-width: 1180px;
+  margin: 0 auto 24px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.executive-card {
+  padding: 22px;
+  border-radius: 22px;
+  background: #ffffff;
+  box-shadow: 0 14px 35px rgba(15, 23, 42, 0.08);
+  border: 1px solid rgba(15, 23, 42, 0.06);
+}
+
+.executive-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.executive-header h2 {
+  margin: 0;
+  color: #0f172a;
+}
+
+.mini-stat {
+  white-space: nowrap;
+  padding: 8px 10px;
+  border-radius: 999px;
+  background: #e0f2fe;
+  color: #075985;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.ranking-list,
+.review-list {
+  display: grid;
+  gap: 10px;
+}
+
+.ranking-item,
+.review-item {
+  width: 100%;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 14px;
+  background: #f8fafc;
+  color: #0f172a;
+  cursor: pointer;
+  text-align: left;
+}
+
+.ranking-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.ranking-item:hover,
+.review-item:hover {
+  background: #eef6ff;
+  border-color: #bfdbfe;
+}
+
+.ranking-item strong,
+.review-item strong {
+  display: block;
+  color: #0f172a;
+}
+
+.ranking-item small,
+.review-item span {
+  display: block;
+  margin-top: 4px;
+  color: #64748b;
+  font-weight: 700;
+}
+
+.ranking-item b {
+  min-width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  background: #008060;
+  color: #ffffff;
+  font-size: 18px;
+}
+
+.review-item span {
+  color: #b45309;
+}
+
+@media (max-width: 1050px) {
+  .executive-summary {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 800px) {
+  .executive-summary,
+  .executive-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .executive-header,
+  .ranking-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
