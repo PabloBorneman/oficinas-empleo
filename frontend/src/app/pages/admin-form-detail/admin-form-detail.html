@@ -1,0 +1,397 @@
+﻿<main class="detail-page">
+  <header class="topbar">
+    <button type="button" class="back-button" (click)="goBack()">
+      ← Volver
+    </button>
+  </header>
+
+  @if (loading) {
+    <section class="state-card">
+      Cargando detalle...
+    </section>
+  }
+
+  @if (errorMessage) {
+    <section class="state-card error">
+      {{ errorMessage }}
+    </section>
+  }
+
+  @if (!loading && !errorMessage && detail) {
+    <section class="hero-card">
+      <div>
+        <p class="eyebrow">Detalle del relevamiento</p>
+        <h1>{{ detail.form.title }}</h1>
+        <p class="description">
+          {{ detail.form.description || 'Sin descripción cargada.' }}
+        </p>
+
+        <div class="chips">
+          <span class="chip">{{ getScopeLabel(detail.form.scope) }}</span>
+          <span class="chip warning">{{ getStatusLabel(detail.form.status) }}</span>
+          <span class="chip muted">Creado por: {{ detail.form.created_by_name || 'Sin dato' }}</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="summary-grid">
+      <article class="summary-card">
+        <span>Campos</span>
+        <strong>{{ detail.summary.fields_count }}</strong>
+      </article>
+
+      <article class="summary-card">
+        <span>Municipios asignados</span>
+        <strong>{{ detail.summary.assignments_count }}</strong>
+      </article>
+
+      <article class="summary-card">
+        <span>Respuestas</span>
+        <strong>{{ detail.summary.submissions_count }}</strong>
+      </article>
+    </section>
+
+    <section class="field-panel">
+      <div class="field-panel-header">
+        <div>
+          <p class="eyebrow">Campos del relevamiento</p>
+          <h2>Agregar campo</h2>
+          <p>Definí qué información debe cargar cada oficina municipal.</p>
+        </div>
+
+        @if (!creatingField) {
+          <button type="button" class="field-button" (click)="openFieldForm()">
+            Agregar campo
+          </button>
+        }
+      </div>
+
+      @if (fieldSuccessMessage) {
+        <p class="success-text">{{ fieldSuccessMessage }}</p>
+      }
+
+      @if (creatingField) {
+        <form class="field-form" [formGroup]="fieldForm" (ngSubmit)="saveField()">
+          <label>
+            Nombre del campo
+            <input type="text" formControlName="label" placeholder="Ej: Disponibilidad horaria" />
+
+            @if (isFieldFormInvalid('label')) {
+              <small>El nombre del campo es obligatorio.</small>
+            }
+          </label>
+
+          <label>
+            Tipo de campo
+            <select formControlName="type">
+              <option value="text">Texto</option>
+              <option value="textarea">Texto largo</option>
+              <option value="number">Número</option>
+              <option value="select">Selección</option>
+              <option value="multiselect">Selección múltiple</option>
+              <option value="boolean">Sí / No</option>
+              <option value="date">Fecha</option>
+            </select>
+          </label>
+
+          <label>
+            Opciones
+            <input type="text" formControlName="optionsText" placeholder="Ej: Manana, Tarde, Noche" />
+            <span class="hint">Usalo para campos de selección. Separá cada opción con coma.</span>
+          </label>
+
+          <label>
+            Obligatorio
+            <select formControlName="required">
+              <option value="true">Sí</option>
+              <option value="false">No</option>
+            </select>
+          </label>
+
+          @if (fieldErrorMessage) {
+            <p class="error-text">{{ fieldErrorMessage }}</p>
+          }
+
+          <div class="form-actions">
+            <button type="button" class="secondary-button" (click)="cancelFieldForm()">
+              Cancelar
+            </button>
+
+            <button type="submit" class="field-button" [disabled]="savingField">
+              {{ savingField ? 'Guardando...' : 'Guardar campo' }}
+            </button>
+          </div>
+        </form>
+      }
+    </section>
+    <section class="assignment-panel">
+      <div class="assignment-header">
+        <div>
+          <p class="eyebrow">Asignación de oficinas</p>
+          <h2>Asignar relevamiento a una oficina</h2>
+          <p>Seleccioná una oficina municipal que todavía no tenga asignado este relevamiento.</p>
+        </div>
+      </div>
+
+      @if (assignmentSuccessMessage) {
+        <p class="success-text">{{ assignmentSuccessMessage }}</p>
+      }
+
+      @if (usersLoading) {
+        <p class="empty">Cargando oficinas disponibles...</p>
+      }
+
+      @if (usersErrorMessage) {
+        <p class="error-text">{{ usersErrorMessage }}</p>
+      }
+
+      @if (!usersLoading && !usersErrorMessage && assignableUsers.length === 0) {
+        <p class="empty">Todas las oficinas municipales activas ya tienen este relevamiento asignado.</p>
+      }
+
+      @if (!usersLoading && !usersErrorMessage && assignableUsers.length > 0) {
+        <div class="assign-form">
+          <label>
+            Oficina municipal
+            <select [value]="selectedUserId" (change)="onAssignUserChange($event)">
+              @for (user of assignableUsers; track user.id) {
+                <option [value]="user.id">
+                  {{ getUserOptionLabel(user) }}
+                </option>
+              }
+            </select>
+          </label>
+
+          <div class="assign-actions">
+            <button type="button" class="assign-button" [disabled]="assigning" (click)="assignSelectedUser()">
+              {{ assigning ? 'Asignando...' : 'Asignar oficina' }}
+            </button>
+
+            <button type="button" class="assign-all-button" [disabled]="assigning" (click)="assignAllUsers()">
+              {{ assigning ? 'Asignando...' : 'Asignar a todas las pendientes' }}
+            </button>
+          </div>
+        </div>
+      }
+
+      @if (assignmentErrorMessage) {
+        <p class="error-text">{{ assignmentErrorMessage }}</p>
+      }
+    </section>
+
+    <section class="stats-panel">
+      <div class="stats-header">
+        <div>
+          <p class="eyebrow">Estadísticas automáticas</p>
+          <h2>Datos del relevamiento</h2>
+          <p>Seleccioná un campo para ver el resultado unificado y la comparación por municipio.</p>
+        </div>
+
+        <label class="field-selector">
+          Campo
+          <select [value]="selectedFieldId" (change)="onStatsFieldChange($event)">
+            @for (field of detail.fields; track field.id) {
+              <option [value]="field.id">
+                {{ formatText(field.label) }}
+              </option>
+            }
+          </select>
+        </label>
+      </div>
+
+      <div class="stats-grid">
+        <article class="chart-card">
+          <h3>Estadística unificada</h3>
+
+          @if (statsLoading) {
+            <p class="empty">Cargando estadística...</p>
+          }
+
+          @if (statsErrorMessage) {
+            <p class="error-text">{{ statsErrorMessage }}</p>
+          }
+
+          @if (!statsLoading && !statsErrorMessage && stats) {
+            <p class="chart-total">Total respuestas: {{ stats.total }}</p>
+
+            <div class="bars">
+              @for (item of stats.items; track item.label) {
+                <div class="bar-row">
+                  <div class="bar-info">
+                    <strong>{{ formatText(item.label) }}</strong>
+                    <span>{{ item.count }} respuestas · {{ item.percentage }}%</span>
+                  </div>
+
+                  <div class="bar-track">
+                    <div class="bar-fill" [style.width]="getPercentageWidth(item.percentage)"></div>
+                  </div>
+                </div>
+              }
+            </div>
+          }
+        </article>
+
+        <article class="chart-card">
+          <h3>Comparativa por municipio</h3>
+
+          @if (comparisonLoading) {
+            <p class="empty">Cargando comparativa...</p>
+          }
+
+          @if (comparisonErrorMessage) {
+            <p class="error-text">{{ comparisonErrorMessage }}</p>
+          }
+
+          @if (!comparisonLoading && !comparisonErrorMessage && comparison) {
+            @if (comparison.municipalities.length === 0) {
+              <p class="empty">Todavía no hay datos comparativos para este campo.</p>
+            }
+
+            <div class="comparison-list">
+              @for (municipality of comparison.municipalities; track municipality.municipality_name) {
+                <div class="municipality-comparison">
+                  <div class="municipality-title">
+                    <strong>{{ municipality.municipality_name }}</strong>
+                    <span>Total: {{ municipality.total }}</span>
+                  </div>
+
+                  @for (item of municipality.items; track item.label) {
+                    <div class="bar-row small">
+                      <div class="bar-info">
+                        <strong>{{ formatText(item.label) }}</strong>
+                        <span>{{ item.count }} · {{ item.percentage }}%</span>
+                      </div>
+
+                      <div class="bar-track">
+                        <div class="bar-fill secondary" [style.width]="getPercentageWidth(item.percentage)"></div>
+                      </div>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          }
+        </article>
+      </div>
+    </section>
+
+    <section class="admin-submissions-panel">
+      <div class="submissions-header">
+        <div>
+          <p class="eyebrow">Respuestas cargadas</p>
+          <h2>Detalle de respuestas por oficina</h2>
+          <p>Listado de respuestas individuales cargadas por las oficinas municipales.</p>
+        </div>
+
+        @if ((submissionsResponse?.submissions?.length || 0) > 0) {
+          <button type="button" class="export-button" (click)="exportSubmissionsCsv()">
+            Exportar CSV
+          </button>
+        }
+      </div>
+
+      @if (submissionsLoading) {
+        <p class="empty">Cargando respuestas...</p>
+      }
+
+      @if (submissionsErrorMessage) {
+        <p class="error-text">{{ submissionsErrorMessage }}</p>
+      }
+
+      @if (!submissionsLoading && !submissionsErrorMessage && submissionsResponse?.submissions?.length === 0) {
+        <p class="empty">Todavía no hay respuestas cargadas para este relevamiento.</p>
+      }
+
+      <div class="admin-submissions-list">
+        @for (submission of submissionsResponse?.submissions; track submission.id) {
+          <article class="admin-submission-card">
+            <div class="admin-submission-title">
+              <div>
+                <strong>Respuesta #{{ submission.id }}</strong>
+                <span>{{ submission.created_at }}</span>
+              </div>
+
+              <div class="municipality-badge">
+                {{ formatAdminText(submission.municipality_name) }}
+              </div>
+            </div>
+
+            <div class="admin-values-list">
+              @for (value of submission.values; track value.id) {
+                <div class="admin-value-row">
+                  <span>{{ formatAdminText(value.label) }}</span>
+                  <strong>{{ formatAdminSubmissionValue(value) }}</strong>
+                </div>
+              }
+            </div>
+          </article>
+        }
+      </div>
+    </section>
+    <section class="content-grid">
+      <article class="panel">
+        <h2>Campos del relevamiento</h2>
+
+        @if (detail.fields.length === 0) {
+          <p class="empty">Este relevamiento todavía no tiene campos.</p>
+        }
+
+        <div class="list">
+          @for (field of detail.fields; track field.id) {
+            <div class="list-item">
+              <div>
+                <strong>{{ field.field_order }}. {{ formatText(field.label) }}</strong>
+                <span>{{ field.type }} · {{ getRequiredLabel(field) }}</span>
+              </div>
+
+              <p>{{ getOptionsText(field) }}</p>
+            </div>
+          }
+        </div>
+      </article>
+
+      <article class="panel">
+        <h2>Municipios asignados</h2>
+
+        @if (detail.assignments.length === 0) {
+          <p class="empty">Este relevamiento todavía no tiene municipios asignados.</p>
+        }
+
+        <div class="list">
+          @for (assignment of detail.assignments; track assignment.id) {
+            <div class="list-item">
+              <div>
+                <strong>{{ getMunicipalityLabel(assignment) }}</strong>
+                <span>Usuario: {{ assignment.username }}</span>
+              </div>
+
+              <p>Asignado: {{ assignment.assigned_at }}</p>
+            </div>
+          }
+        </div>
+      </article>
+    </section>
+
+    <section class="panel full">
+      <h2>Respuestas por municipio</h2>
+
+      @if (detail.summary.submissions_by_municipality.length === 0) {
+        <p class="empty">Todavía no hay respuestas cargadas por municipio.</p>
+      }
+
+      <div class="municipality-grid">
+        @for (item of detail.summary.submissions_by_municipality; track item.municipality_name) {
+          <div class="municipality-card">
+            <span>{{ item.municipality_name }}</span>
+            <strong>{{ item.submissions_count }}</strong>
+          </div>
+        }
+      </div>
+    </section>
+  }
+</main>
+
+
+
+
+

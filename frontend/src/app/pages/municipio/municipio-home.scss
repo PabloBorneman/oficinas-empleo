@@ -1,0 +1,265 @@
+﻿.municipio-page {
+  min-height: 100vh;
+  padding: 32px;
+  background: #f4f7fb;
+}
+
+.topbar {
+  max-width: 1180px;
+  margin: 0 auto 24px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.eyebrow {
+  margin: 0 0 8px;
+  color: #008060;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.eyebrow.blue {
+  color: #005b96;
+}
+
+.eyebrow.green {
+  color: #008060;
+}
+
+h1 {
+  margin: 0;
+  color: #0f172a;
+  font-size: 34px;
+}
+
+h2 {
+  margin: 0;
+  color: #0f172a;
+  font-size: 24px;
+}
+
+h3 {
+  margin: 14px 0 10px;
+  color: #0f172a;
+  font-size: 21px;
+}
+
+.subtitle {
+  max-width: 760px;
+  margin: 10px 0 0;
+  color: #475569;
+  line-height: 1.5;
+}
+
+.logout-button,
+.primary-button {
+  border: 0;
+  border-radius: 12px;
+  padding: 12px 16px;
+  color: #ffffff;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.logout-button {
+  background: #0f172a;
+}
+
+.primary-button {
+  width: 100%;
+  margin-top: 16px;
+  background: #008060;
+}
+
+.primary-button:hover {
+  background: #00684f;
+}
+
+.summary-grid {
+  max-width: 1180px;
+  margin: 0 auto 24px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.summary-card,
+.panel,
+.form-card {
+  background: #ffffff;
+  border-radius: 22px;
+  box-shadow: 0 14px 35px rgba(15, 23, 42, 0.08);
+  border: 1px solid rgba(15, 23, 42, 0.06);
+}
+
+.summary-card {
+  padding: 20px;
+}
+
+.summary-card span {
+  display: block;
+  margin-bottom: 8px;
+  color: #64748b;
+  font-weight: 700;
+}
+
+.summary-card strong {
+  display: block;
+  color: #0f172a;
+  font-size: 30px;
+}
+
+.summary-card strong.small {
+  font-size: 22px;
+}
+
+.content-grid {
+  max-width: 1180px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.panel {
+  padding: 22px;
+}
+
+.section-header {
+  margin-bottom: 16px;
+}
+
+.cards-list {
+  display: grid;
+  gap: 16px;
+}
+
+.form-card {
+  padding: 18px;
+  box-shadow: none;
+  background: #f8fafc;
+}
+
+.form-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.badge,
+.status,
+.id-label {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.badge.assigned {
+  color: #047857;
+  background: #d1fae5;
+}
+
+.badge.official {
+  color: #075985;
+  background: #e0f2fe;
+}
+
+.status {
+  color: #92400e;
+  background: #fef3c7;
+}
+
+.id-label {
+  color: #475569;
+  background: #e2e8f0;
+}
+
+.form-card p {
+  margin: 0;
+  color: #475569;
+  line-height: 1.5;
+}
+
+.meta {
+  margin-top: 14px;
+  display: grid;
+  gap: 6px;
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.metrics {
+  margin-top: 16px;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.metrics div {
+  padding: 13px;
+  border-radius: 14px;
+  background: #ffffff;
+}
+
+.metrics strong {
+  display: block;
+  color: #0f172a;
+  font-size: 24px;
+}
+
+.metrics span {
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.assignment-state {
+  margin-top: 16px;
+  border-radius: 14px;
+  padding: 12px;
+  color: #92400e;
+  background: #fef3c7;
+  font-weight: 800;
+  text-align: center;
+}
+
+.assignment-state.ok {
+  color: #047857;
+  background: #d1fae5;
+}
+
+.state-text {
+  margin: 0;
+  color: #64748b;
+  font-weight: 700;
+}
+
+.error-text {
+  margin: 0;
+  color: #991b1b;
+  font-weight: 800;
+}
+
+@media (max-width: 800px) {
+  .municipio-page {
+    padding: 20px;
+  }
+
+  .topbar {
+    flex-direction: column;
+  }
+
+  .summary-grid,
+  .content-grid {
+    grid-template-columns: 1fr;
+  }
+}

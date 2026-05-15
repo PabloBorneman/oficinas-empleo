@@ -1,0 +1,182 @@
+﻿<main class="detail-page">
+  <header class="topbar">
+    <button type="button" class="back-button" (click)="goBack()">
+      ← Volver
+    </button>
+  </header>
+
+  @if (loadingDetail) {
+    <section class="state-card">
+      Cargando relevamiento...
+    </section>
+  }
+
+  @if (detailErrorMessage) {
+    <section class="state-card error">
+      {{ detailErrorMessage }}
+    </section>
+  }
+
+  @if (!loadingDetail && !detailErrorMessage && detail) {
+    <section class="hero-card">
+      <p class="eyebrow">Detalle del relevamiento</p>
+      <h1>{{ detail.form.title }}</h1>
+      <p class="description">
+        {{ detail.form.description || 'Sin descripción cargada.' }}
+      </p>
+
+      <div class="chips">
+        <span class="chip">Municipio: {{ detail.municipality_name }}</span>
+        <span class="chip muted">Campos: {{ detail.fields.length }}</span>
+        <span class="chip muted">Asignado: {{ detail.form.assigned_at }}</span>
+      </div>
+    </section>
+
+    <section class="content-grid">
+      <article class="panel">
+        <h2>Campos a completar</h2>
+
+        <div class="list">
+          @for (field of detail.fields; track field.id) {
+            <div class="list-item">
+              <div>
+                <strong>{{ field.field_order }}. {{ formatText(field.label) }}</strong>
+                <span>{{ getFieldTypeLabel(field.type) }} · {{ getRequiredLabel(field) }}</span>
+              </div>
+
+              <p>{{ getOptionsText(field) }}</p>
+            </div>
+          }
+        </div>
+      </article>
+
+      <article class="panel">
+        <div class="panel-header">
+          <div>
+            <h2>Mis respuestas</h2>
+            <p>Solo se muestran las respuestas cargadas por esta oficina.</p>
+          </div>
+
+          @if (!showSubmissionForm) {
+            <button type="button" class="primary-button" (click)="openSubmissionForm()">
+              Nueva respuesta
+            </button>
+          }
+        </div>
+
+        @if (submissionSuccessMessage) {
+          <p class="success-text">{{ submissionSuccessMessage }}</p>
+        }
+
+        @if (showSubmissionForm) {
+          <form class="dynamic-form" [formGroup]="submissionForm" (ngSubmit)="saveSubmission()">
+            <h3>Nueva respuesta</h3>
+
+            @for (field of detail.fields; track field.id) {
+              <label class="form-field">
+                <span>
+                  {{ formatText(field.label) }}
+                  @if (field.required) {
+                    <strong>*</strong>
+                  }
+                </span>
+
+                @if (field.type === 'select') {
+                  <select [formControlName]="getFieldControlName(field)">
+                    <option value="">Seleccionar...</option>
+
+                    @for (option of field.options || []; track option) {
+                      <option [value]="option">{{ formatText(option) }}</option>
+                    }
+                  </select>
+                } @else if (field.type === 'multiselect') {
+                  <div class="checkbox-group">
+                    @for (option of field.options || []; track option) {
+                      <label class="checkbox-option">
+                        <input
+                          type="checkbox"
+                          [checked]="isMultiselectOptionSelected(field, option)"
+                          (change)="toggleMultiselectOption(field, option, $event)"
+                        />
+                        <span>{{ formatText(option) }}</span>
+                      </label>
+                    }
+                  </div>
+                } @else if (field.type === 'textarea') {
+                  <textarea rows="4" [formControlName]="getFieldControlName(field)"></textarea>
+                } @else if (field.type === 'number') {
+                  <input type="number" [formControlName]="getFieldControlName(field)" />
+                } @else if (field.type === 'date') {
+                  <input type="date" [formControlName]="getFieldControlName(field)" />
+                } @else if (field.type === 'boolean') {
+                  <select [formControlName]="getFieldControlName(field)">
+                    <option value="">Seleccionar...</option>
+                    <option value="Si">Sí</option>
+                    <option value="No">No</option>
+                  </select>
+                } @else {
+                  <input type="text" [formControlName]="getFieldControlName(field)" />
+                }
+
+                @if (isFieldInvalid(field)) {
+                  <small>Este campo es obligatorio.</small>
+                }
+              </label>
+            }
+
+            @if (submissionErrorMessage) {
+              <p class="error-text">{{ submissionErrorMessage }}</p>
+            }
+
+            <div class="form-actions">
+              <button type="button" class="secondary-button" (click)="cancelSubmissionForm()">
+                Cancelar
+              </button>
+
+              <button type="submit" class="primary-button" [disabled]="savingSubmission">
+                {{ savingSubmission ? 'Guardando...' : 'Guardar respuesta' }}
+              </button>
+            </div>
+          </form>
+        }
+
+        @if (loadingSubmissions) {
+          <p class="empty">Cargando respuestas...</p>
+        }
+
+        @if (submissionsErrorMessage) {
+          <p class="error-text">{{ submissionsErrorMessage }}</p>
+        }
+
+        @if (!loadingSubmissions && !submissionsErrorMessage && submissionsDetail?.submissions?.length === 0) {
+          <p class="empty">Todavía no cargaste respuestas para este relevamiento.</p>
+        }
+
+        <div class="submissions-list">
+          @for (submission of submissionsDetail?.submissions; track submission.id) {
+            <article class="submission-card">
+              <div class="submission-header">
+                <strong>Respuesta #{{ submission.id }}</strong>
+                <span>{{ submission.created_at }}</span>
+              </div>
+
+              <div class="values-list">
+                @for (value of submission.values; track value.id) {
+                  <div class="value-row">
+                    <span>{{ formatText(value.label) }}</span>
+                    <strong>{{ formatSubmissionValue(value) }}</strong>
+                  </div>
+                }
+              </div>
+            </article>
+          }
+        </div>
+      </article>
+    </section>
+  }
+</main>
+
+
+
+
+

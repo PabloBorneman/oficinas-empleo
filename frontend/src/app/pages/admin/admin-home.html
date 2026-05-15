@@ -1,0 +1,155 @@
+﻿<main class="admin-page">
+  <header class="topbar">
+    <div>
+      <p class="eyebrow">Panel Ministerio</p>
+      <h1>Relevamientos</h1>
+      <p class="subtitle">
+        Bienvenido, {{ user?.name }}. Desde acá vamos a gestionar relevamientos, municipios,
+        respuestas y estadísticas.
+      </p>
+    </div>
+
+    <div class="topbar-actions">
+      <button type="button" class="users-button" (click)="viewUsers()">Oficinas / usuarios</button>
+
+      @if (!creatingForm) {
+        <button type="button" class="new-form-button" (click)="openCreateForm()">Nuevo relevamiento</button>
+      }
+
+      <button type="button" class="logout-button" (click)="logout()">Cerrar sesión</button>
+    </div>
+  </header>
+
+  @if (createFormSuccessMessage) {
+    <section class="state-card success">
+      {{ createFormSuccessMessage }}
+    </section>
+  }
+
+  @if (creatingForm) {
+    <section class="create-panel">
+      <div class="create-header">
+        <div>
+          <p class="eyebrow">Nuevo relevamiento oficial</p>
+          <h2>Crear relevamiento</h2>
+          <p>Se creará como relevamiento oficial del Ministerio, activo y visible para asignar a oficinas.</p>
+        </div>
+      </div>
+
+      <form class="create-form" [formGroup]="newForm" (ngSubmit)="saveForm()">
+        <label>
+          Título
+          <input type="text" formControlName="title" placeholder="Ej: Relevamiento de disponibilidad horaria" />
+
+          @if (isInvalid('title')) {
+            <small>El título es obligatorio.</small>
+          }
+        </label>
+
+        <label>
+          Descripción
+          <textarea rows="4" formControlName="description" placeholder="Ej: Relevamiento para conocer disponibilidad de horarios, turnos y días de asistencia."></textarea>
+
+          @if (isInvalid('description')) {
+            <small>La descripción es obligatoria.</small>
+          }
+        </label>
+
+        @if (createFormErrorMessage) {
+          <p class="error-text">{{ createFormErrorMessage }}</p>
+        }
+
+        <div class="form-actions">
+          <button type="button" class="secondary-button" (click)="cancelCreateForm()">
+            Cancelar
+          </button>
+
+          <button type="submit" class="new-form-button" [disabled]="savingForm">
+            {{ savingForm ? 'Guardando...' : 'Guardar relevamiento' }}
+          </button>
+        </div>
+      </form>
+    </section>
+  }
+
+  <section class="summary-grid">
+    <article class="summary-card">
+      <span>Total relevamientos</span>
+      <strong>{{ forms.length }}</strong>
+    </article>
+
+    <article class="summary-card">
+      <span>Oficiales</span>
+      <strong>{{ officialFormsCount }}</strong>
+    </article>
+
+    <article class="summary-card">
+      <span>Locales</span>
+      <strong>{{ localFormsCount }}</strong>
+    </article>
+  </section>
+
+  @if (loading) {
+    <section class="state-card">
+      Cargando relevamientos...
+    </section>
+  }
+
+  @if (errorMessage) {
+    <section class="state-card error">
+      {{ errorMessage }}
+    </section>
+  }
+
+  @if (!loading && !errorMessage) {
+    <section class="forms-grid">
+      @for (form of forms; track form.id) {
+        <article class="form-card">
+          <div class="form-card-header">
+            <div>
+              <span class="badge" [class.local]="form.scope === 'local'">
+                {{ getScopeLabel(form.scope) }}
+              </span>
+
+              <h2>{{ form.title }}</h2>
+            </div>
+
+            <span class="status">
+              {{ getStatusLabel(form.status) }}
+            </span>
+          </div>
+
+          <p class="description">
+            {{ form.description || 'Sin descripción cargada.' }}
+          </p>
+
+          <div class="metrics">
+            <div>
+              <strong>{{ form.fields_count }}</strong>
+              <span>Campos</span>
+            </div>
+
+            <div>
+              <strong>{{ form.assignments_count }}</strong>
+              <span>Asignaciones</span>
+            </div>
+
+            <div>
+              <strong>{{ form.submissions_count }}</strong>
+              <span>Respuestas</span>
+            </div>
+          </div>
+
+          <div class="footer">
+            <span>Creado por: {{ form.created_by_name || 'Sin dato' }}</span>
+            <span>ID #{{ form.id }}</span>
+          </div>
+
+          <button type="button" class="detail-button" (click)="viewDetail(form.id)">
+            Ver detalle
+          </button>
+        </article>
+      }
+    </section>
+  }
+</main>

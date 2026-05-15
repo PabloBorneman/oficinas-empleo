@@ -1,0 +1,130 @@
+﻿<main class="municipio-page">
+  <header class="topbar">
+    <div>
+      <p class="eyebrow">Panel Oficina de Empleo</p>
+      <h1>{{ municipalityName || user?.municipality_name || user?.name }}</h1>
+      <p class="subtitle">
+        Desde acá la oficina municipal puede ver sus relevamientos asignados, consultar plantillas oficiales
+        y cargar respuestas propias.
+      </p>
+    </div>
+
+    <button type="button" class="logout-button" (click)="logout()">Cerrar sesión</button>
+  </header>
+
+  <section class="summary-grid">
+    <article class="summary-card">
+      <span>Mis relevamientos</span>
+      <strong>{{ assignedForms.length }}</strong>
+    </article>
+
+    <article class="summary-card">
+      <span>Plantillas oficiales</span>
+      <strong>{{ availableForms.length }}</strong>
+    </article>
+
+    <article class="summary-card">
+      <span>Municipio</span>
+      <strong class="small">{{ municipalityName || user?.municipality_name || '-' }}</strong>
+    </article>
+  </section>
+
+  <section class="content-grid">
+    <article class="panel">
+      <div class="section-header">
+        <div>
+          <p class="eyebrow green">Mis relevamientos</p>
+          <h2>Asignados a mi oficina</h2>
+        </div>
+      </div>
+
+      @if (loadingAssigned) {
+        <p class="state-text">Cargando relevamientos...</p>
+      }
+
+      @if (assignedErrorMessage) {
+        <p class="error-text">{{ assignedErrorMessage }}</p>
+      }
+
+      @if (!loadingAssigned && !assignedErrorMessage && assignedForms.length === 0) {
+        <p class="state-text">Todavía no tenés relevamientos asignados.</p>
+      }
+
+      <div class="cards-list">
+        @for (form of assignedForms; track form.id) {
+          <article class="form-card">
+            <div class="form-card-header">
+              <span class="badge assigned">Asignado</span>
+              <span class="id-label">ID #{{ form.id }}</span>
+            </div>
+
+            <h3>{{ form.title }}</h3>
+
+            <p>{{ form.description || 'Sin descripción cargada.' }}</p>
+
+            <div class="meta">
+              <span>Creado: {{ form.created_at }}</span>
+              <span>Asignado: {{ form.assigned_at }}</span>
+            </div>
+
+            <button type="button" class="primary-button" (click)="viewForm(form.id)">
+              Ver / cargar respuestas
+            </button>
+          </article>
+        }
+      </div>
+    </article>
+
+    <article class="panel">
+      <div class="section-header">
+        <div>
+          <p class="eyebrow blue">Plantillas oficiales</p>
+          <h2>Disponibles del Ministerio</h2>
+        </div>
+      </div>
+
+      @if (loadingAvailable) {
+        <p class="state-text">Cargando plantillas...</p>
+      }
+
+      @if (availableErrorMessage) {
+        <p class="error-text">{{ availableErrorMessage }}</p>
+      }
+
+      @if (!loadingAvailable && !availableErrorMessage && availableForms.length === 0) {
+        <p class="state-text">No hay plantillas oficiales disponibles por ahora.</p>
+      }
+
+      <div class="cards-list">
+        @for (form of availableForms; track form.id) {
+          <article class="form-card">
+            <div class="form-card-header">
+              <span class="badge official">Oficial</span>
+              <span class="status">{{ getStatusLabel(form.status) }}</span>
+            </div>
+
+            <h3>{{ form.title }}</h3>
+
+            <p>{{ form.description || 'Sin descripción cargada.' }}</p>
+
+            <div class="metrics">
+              <div>
+                <strong>{{ form.fields_count }}</strong>
+                <span>Campos</span>
+              </div>
+
+              <div>
+                <strong>{{ form.my_submissions_count }}</strong>
+                <span>Mis respuestas</span>
+              </div>
+            </div>
+
+            <div class="assignment-state" [class.ok]="form.already_assigned">
+              {{ getAssignedLabel(form) }}
+            </div>
+          </article>
+        }
+      </div>
+    </article>
+  </section>
+</main>

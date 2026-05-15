@@ -1,0 +1,36 @@
+﻿<main class="login-page">
+  <section class="login-card">
+    <div class="login-header">
+      <p class="eyebrow">Red de Oficinas de Empleo</p>
+      <h1>Ingreso al sistema</h1>
+      <p class="subtitle">Ministerio de Trabajo de Jujuy</p>
+    </div>
+
+    <form [formGroup]="loginForm" (ngSubmit)="submit()" class="login-form">
+      <label>
+        Usuario
+        <input type="text" formControlName="username" autocomplete="username" />
+      </label>
+
+      <label>
+        Contraseña
+        <input type="password" formControlName="password" autocomplete="current-password" />
+      </label>
+
+      @if (errorMessage) {
+        <div class="error-message">
+          {{ errorMessage }}
+        </div>
+      }
+
+      <button type="submit" [disabled]="loading">
+        {{ loading ? 'Ingresando...' : 'Ingresar' }}
+      </button>
+    </form>
+
+    <div class="dev-help">
+      <strong>Prueba rápida:</strong>
+      <span>admin / Admin1234!</span>
+    </div>
+  </section>
+</main>

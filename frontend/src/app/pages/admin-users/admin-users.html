@@ -1,0 +1,167 @@
+﻿<main class="users-page">
+  <header class="topbar">
+    <button type="button" class="back-button" (click)="goBack()">
+      ← Volver
+    </button>
+  </header>
+
+  <section class="hero-card">
+    <p class="eyebrow">Panel Ministerio</p>
+    <h1>Oficinas y usuarios</h1>
+    <p class="subtitle">
+      Listado de usuarios registrados en el sistema. Cada oficina municipal trabaja con un usuario propio.
+    </p>
+  </section>
+
+  <section class="summary-grid">
+    <article class="summary-card">
+      <span>Total usuarios</span>
+      <strong>{{ users.length }}</strong>
+    </article>
+
+    <article class="summary-card">
+      <span>Oficinas municipales</span>
+      <strong>{{ municipioUsersCount }}</strong>
+    </article>
+
+    <article class="summary-card">
+      <span>Usuarios activos</span>
+      <strong>{{ activeUsersCount }}</strong>
+    </article>
+  </section>
+
+  @if (createSuccessMessage) {
+    <section class="state-card success">
+      {{ createSuccessMessage }}
+    </section>
+  }
+
+  @if (creating) {
+    <section class="create-panel">
+      <div class="panel-header">
+        <div>
+          <p class="eyebrow">Nueva oficina</p>
+          <h2>Crear usuario municipal</h2>
+        </div>
+      </div>
+
+      <form class="create-form" [formGroup]="createOfficeForm" (ngSubmit)="saveOffice()">
+        <label>
+          Municipio
+          <input type="text" formControlName="municipality_name" placeholder="Ej: Yuto" />
+
+          @if (isInvalid('municipality_name')) {
+            <small>El municipio es obligatorio.</small>
+          }
+        </label>
+
+        <label>
+          Usuario
+          <input type="text" formControlName="username" placeholder="Ej: Yuto" />
+
+          @if (isInvalid('username')) {
+            <small>El usuario es obligatorio.</small>
+          }
+        </label>
+
+        <label>
+          Contraseña
+          <input type="text" formControlName="password" placeholder="Ej: Yuto1234!" />
+
+          @if (isInvalid('password')) {
+            <small>La contraseña es obligatoria.</small>
+          }
+        </label>
+
+        @if (createErrorMessage) {
+          <p class="error-text">{{ createErrorMessage }}</p>
+        }
+
+        <div class="form-actions">
+          <button type="button" class="secondary-button" (click)="cancelCreateForm()">
+            Cancelar
+          </button>
+
+          <button type="submit" class="primary-button" [disabled]="saving">
+            {{ saving ? 'Guardando...' : 'Guardar oficina' }}
+          </button>
+        </div>
+      </form>
+    </section>
+  }
+
+  @if (loading) {
+    <section class="state-card">
+      Cargando usuarios...
+    </section>
+  }
+
+  @if (errorMessage) {
+    <section class="state-card error">
+      {{ errorMessage }}
+    </section>
+  }
+
+  @if (!loading && !errorMessage) {
+    <section class="users-panel">
+      <div class="panel-header">
+        <div>
+          <p class="eyebrow">Usuarios registrados</p>
+          <h2>Listado general</h2>
+        </div>
+
+        @if (!creating) {
+          <button type="button" class="primary-button" (click)="openCreateForm()">
+            Crear oficina
+          </button>
+        }
+      </div>
+
+      <div class="users-list">
+        @for (user of users; track user.id) {
+          <article class="user-card">
+            <div class="user-main">
+              <div>
+                <div class="badges">
+                  <span class="badge" [class.admin]="user.role === 'admin'">
+                    {{ getRoleLabel(user.role) }}
+                  </span>
+
+                  <span class="status" [class.inactive]="user.active !== 1">
+                    {{ getActiveLabel(user.active) }}
+                  </span>
+                </div>
+
+                <h3>{{ user.name }}</h3>
+
+                <p>
+                  Usuario: <strong>{{ user.username }}</strong>
+                </p>
+              </div>
+
+              <span class="id-label">ID #{{ user.id }}</span>
+            </div>
+
+            <div class="details-grid">
+              <div>
+                <span>Municipio</span>
+                <strong>{{ user.municipality_name || 'No aplica' }}</strong>
+              </div>
+
+              <div>
+                <span>Rol</span>
+                <strong>{{ getRoleLabel(user.role) }}</strong>
+              </div>
+
+              <div>
+                <span>Creado</span>
+                <strong>{{ user.created_at }}</strong>
+              </div>
+            </div>
+          </article>
+        }
+      </div>
+    </section>
+  }
+</main>
+
