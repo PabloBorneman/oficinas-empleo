@@ -7,6 +7,7 @@ import {
   MunicipioFormDetailResponse,
   MunicipioFormField,
   MunicipioService,
+  MunicipioSubmission,
   MunicipioSubmissionValue,
   MunicipioSubmissionsDetailResponse
 } from '../../core/services/municipio.service';
@@ -41,6 +42,7 @@ export class MunicipioFormDetailComponent implements OnInit {
   submissionsDetail: MunicipioSubmissionsDetailResponse | null = null;
 
   showSubmissionForm = false;
+  editingSubmissionId: number | null = null;
   submissionForm = new FormGroup<Record<string, FormControl<string>>>({});
 
   ngOnInit(): void {
@@ -211,12 +213,12 @@ export class MunicipioFormDetailComponent implements OnInit {
       .filter((option) => option.length > 0);
   }
 
-  buildSubmissionForm(): void {
+  buildSubmissionForm(submission?: MunicipioSubmission): void {
     const controls: Record<string, FormControl<string>> = {};
     const fields = this.detail?.fields || [];
 
     for (const field of fields) {
-      controls[this.getFieldControlName(field)] = new FormControl('', {
+      controls[this.getFieldControlName(field)] = new FormControl(this.getInitialSubmissionValue(field, submission), {
         nonNullable: true,
         validators: field.required ? [Validators.required] : []
       });
@@ -225,15 +227,56 @@ export class MunicipioFormDetailComponent implements OnInit {
     this.submissionForm = new FormGroup(controls);
   }
 
+  getInitialSubmissionValue(field: MunicipioFormField, submission?: MunicipioSubmission): string {
+    const existingValue = submission?.values.find((value) => Number(value.field_id) === Number(field.id));
+
+    if (!existingValue) {
+      return '';
+    }
+
+    if (Array.isArray(existingValue.value)) {
+      return existingValue.value.join(', ');
+    }
+
+    if (typeof existingValue.value === 'string' && existingValue.value.trim().startsWith('[')) {
+      try {
+        const parsed = JSON.parse(existingValue.value);
+
+        if (Array.isArray(parsed)) {
+          return parsed.join(', ');
+        }
+      } catch (_) {
+        return existingValue.value;
+      }
+    }
+
+    return String(existingValue.value ?? '');
+  }
+
   openSubmissionForm(): void {
+    this.editingSubmissionId = null;
     this.submissionErrorMessage = '';
     this.submissionSuccessMessage = '';
     this.showSubmissionForm = true;
     this.buildSubmissionForm();
   }
 
+  openEditSubmissionForm(submission: MunicipioSubmission): void {
+    if (!this.canCreateSubmission()) {
+      this.submissionErrorMessage = 'Solo se pueden editar respuestas mientras el relevamiento está activo.';
+      return;
+    }
+
+    this.editingSubmissionId = submission.id;
+    this.submissionErrorMessage = '';
+    this.submissionSuccessMessage = '';
+    this.showSubmissionForm = true;
+    this.buildSubmissionForm(submission);
+  }
+
   cancelSubmissionForm(): void {
     this.showSubmissionForm = false;
+    this.editingSubmissionId = null;
     this.submissionErrorMessage = '';
     this.submissionSuccessMessage = '';
     this.buildSubmissionForm();
@@ -261,11 +304,20 @@ export class MunicipioFormDetailComponent implements OnInit {
     this.submissionErrorMessage = '';
     this.submissionSuccessMessage = '';
 
-    this.municipioService.createSubmission(this.formId, payload).subscribe({
+    const editingSubmissionId = this.editingSubmissionId;
+
+    const request$ = editingSubmissionId
+      ? this.municipioService.updateSubmission(editingSubmissionId, payload)
+      : this.municipioService.createSubmission(this.formId, payload);
+
+    request$.subscribe({
       next: () => {
         this.savingSubmission = false;
         this.showSubmissionForm = false;
-        this.submissionSuccessMessage = 'Respuesta cargada correctamente.';
+        this.editingSubmissionId = null;
+        this.submissionSuccessMessage = editingSubmissionId
+          ? 'Respuesta actualizada correctamente.'
+          : 'Respuesta cargada correctamente.';
         this.buildSubmissionForm();
         this.loadSubmissions();
       },
@@ -401,4 +453,5 @@ export class MunicipioFormDetailComponent implements OnInit {
     return labels[type] || type;
   }
 }
+
 

@@ -224,6 +224,10 @@ export class MunicipioService {
     return this.http.post<CreateSubmissionResponse>(`/api/municipio/forms/${formId}/submissions`, payload);
   }
 
+  updateSubmission(submissionId: number, payload: CreateSubmissionRequest): Observable<CreateSubmissionResponse> {
+    return this.http.patch<CreateSubmissionResponse>(`/api/municipio/submissions/${submissionId}`, payload);
+  }
+
   useAvailableForm(formId: number): Observable<UseAvailableFormResponse> {
     return this.http.post<UseAvailableFormResponse>(`/api/municipio/forms/${formId}/use`, {});
   }

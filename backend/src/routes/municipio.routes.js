@@ -379,6 +379,173 @@ router.post('/forms/:formId/submissions', async (req, res) => {
   }
 });
 
+
+router.patch('/submissions/:submissionId', async (req, res) => {
+  try {
+    const submissionId = Number(req.params.submissionId);
+    const { values } = req.body;
+
+    if (!submissionId) {
+      return res.status(400).json({
+        ok: false,
+        message: 'submissionId invalido'
+      });
+    }
+
+    if (!Array.isArray(values) || values.length === 0) {
+      return res.status(400).json({
+        ok: false,
+        message: 'values debe ser un array con las respuestas'
+      });
+    }
+
+    const db = await getDatabase();
+
+    const submission = await db.get(
+      `
+      SELECT
+        submissions.id,
+        submissions.form_id,
+        submissions.user_id,
+        submissions.municipality_name,
+        forms.status,
+        forms.active
+      FROM submissions
+      INNER JOIN forms ON forms.id = submissions.form_id
+      WHERE submissions.id = ?
+        AND submissions.user_id = ?
+        AND forms.active = 1
+      `,
+      [submissionId, req.user.id]
+    );
+
+    if (!submission) {
+      return res.status(404).json({
+        ok: false,
+        message: 'Respuesta no encontrada o no pertenece a este municipio'
+      });
+    }
+
+    if (submission.status !== 'active') {
+      return res.status(409).json({
+        ok: false,
+        message: 'Solo se pueden editar respuestas de relevamientos activos'
+      });
+    }
+
+    const fields = await db.all(
+      `
+      SELECT
+        id,
+        form_id,
+        label,
+        type,
+        options,
+        required,
+        field_order
+      FROM form_fields
+      WHERE form_id = ?
+      ORDER BY field_order ASC, id ASC
+      `,
+      [submission.form_id]
+    );
+
+    const valuesByFieldId = new Map();
+
+    for (const item of values) {
+      valuesByFieldId.set(Number(item.field_id), item.value);
+    }
+
+    for (const field of fields) {
+      const value = valuesByFieldId.get(field.id);
+      const error = validateFieldValue(field, value);
+
+      if (error) {
+        return res.status(400).json({
+          ok: false,
+          message: error
+        });
+      }
+    }
+
+    await db.exec('BEGIN TRANSACTION;');
+
+    try {
+      await db.run(
+        `
+        DELETE FROM submission_values
+        WHERE submission_id = ?
+        `,
+        [submissionId]
+      );
+
+      for (const field of fields) {
+        const value = valuesByFieldId.get(field.id);
+
+        if (!isEmptyValue(value)) {
+          await db.run(
+            `
+            INSERT INTO submission_values (
+              submission_id,
+              field_id,
+              value
+            )
+            VALUES (?, ?, ?)
+            `,
+            [
+              submissionId,
+              field.id,
+              normalizeValue(field, value)
+            ]
+          );
+        }
+      }
+
+      await db.run(
+        `
+        UPDATE submissions
+        SET updated_at = CURRENT_TIMESTAMP
+        WHERE id = ?
+        `,
+        [submissionId]
+      );
+
+      await db.exec('COMMIT;');
+    } catch (error) {
+      await db.exec('ROLLBACK;');
+      throw error;
+    }
+
+    const updatedSubmission = await db.get(
+      `
+      SELECT
+        id,
+        form_id,
+        user_id,
+        municipality_name,
+        created_at,
+        updated_at
+      FROM submissions
+      WHERE id = ?
+      `,
+      [submissionId]
+    );
+
+    return res.json({
+      ok: true,
+      message: 'Respuesta actualizada correctamente',
+      submission: updatedSubmission
+    });
+  } catch (error) {
+    console.error('Error actualizando respuesta municipal:', error);
+
+    return res.status(500).json({
+      ok: false,
+      message: 'Error interno al actualizar la respuesta'
+    });
+  }
+});
+
 router.get('/forms/:formId/submissions', async (req, res) => {
   const formId = Number(req.params.formId);
 

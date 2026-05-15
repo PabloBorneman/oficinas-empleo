@@ -438,3 +438,25 @@ h3 {
     width: 100%;
   }
 }
+
+
+.edit-submission-button {
+  border: 0;
+  border-radius: 12px;
+  padding: 10px 13px;
+  background: #005b96;
+  color: #ffffff;
+  font-weight: 800;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.edit-submission-button:hover {
+  background: #004977;
+}
+
+@media (max-width: 800px) {
+  .edit-submission-button {
+    width: 100%;
+  }
+}

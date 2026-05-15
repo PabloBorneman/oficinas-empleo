@@ -180,7 +180,7 @@
 
         @if (showSubmissionForm) {
           <form class="dynamic-form" [formGroup]="submissionForm" (ngSubmit)="saveSubmission()">
-            <h3>Nueva respuesta</h3>
+            <h3>{{ editingSubmissionId ? 'Editar respuesta #' + editingSubmissionId : 'Nueva respuesta' }}</h3>
 
             @for (field of detail.fields; track field.id) {
               <label class="form-field">
@@ -244,7 +244,7 @@
               </button>
 
               <button type="submit" class="primary-button" [disabled]="savingSubmission">
-                {{ savingSubmission ? 'Guardando...' : 'Guardar respuesta' }}
+                {{ savingSubmission ? 'Guardando...' : (editingSubmissionId ? 'Guardar cambios' : 'Guardar respuesta') }}
               </button>
             </div>
           </form>
@@ -266,8 +266,16 @@
           @for (submission of submissionsDetail?.submissions; track submission.id) {
             <article class="submission-card">
               <div class="submission-header">
-                <strong>Respuesta #{{ submission.id }}</strong>
-                <span>{{ submission.created_at }}</span>
+                <div>
+                  <strong>Respuesta #{{ submission.id }}</strong>
+                  <span>{{ submission.created_at }}</span>
+                </div>
+
+                @if (detail.form.status === 'active' && !showSubmissionForm) {
+                  <button type="button" class="edit-submission-button" (click)="openEditSubmissionForm(submission)">
+                    Editar respuesta
+                  </button>
+                }
               </div>
 
               <div class="values-list">
