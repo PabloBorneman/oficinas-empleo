@@ -26,11 +26,14 @@ export class MunicipioFormDetailComponent implements OnInit {
   loadingDetail = true;
   loadingSubmissions = true;
   savingSubmission = false;
+  creatingField = false;
 
   detailErrorMessage = '';
   submissionsErrorMessage = '';
   submissionErrorMessage = '';
   submissionSuccessMessage = '';
+  fieldErrorMessage = '';
+  fieldSuccessMessage = '';
 
   detail: MunicipioFormDetailResponse | null = null;
   submissionsDetail: MunicipioSubmissionsDetailResponse | null = null;
@@ -84,6 +87,85 @@ export class MunicipioFormDetailComponent implements OnInit {
         this.loadingSubmissions = false;
       }
     });
+  }
+
+  createLocalField(
+    label: string,
+    type: string,
+    optionsText: string,
+    required: boolean,
+    labelInput?: HTMLInputElement,
+    optionsInput?: HTMLTextAreaElement,
+    requiredInput?: HTMLInputElement
+  ): void {
+    if (this.creatingField) {
+      return;
+    }
+
+    const cleanLabel = String(label || '').trim();
+    const cleanType = String(type || 'text') as MunicipioFormField['type'];
+
+    this.fieldErrorMessage = '';
+    this.fieldSuccessMessage = '';
+
+    if (!cleanLabel) {
+      this.fieldErrorMessage = 'El nombre del campo es obligatorio.';
+      return;
+    }
+
+    const options = this.parseOptionsForField(cleanType, optionsText);
+
+    if ((cleanType === 'select' || cleanType === 'multiselect') && (!options || options.length === 0)) {
+      this.fieldErrorMessage = 'Para selección o selección múltiple tenés que cargar al menos una opción.';
+      return;
+    }
+
+    const nextOrder = (this.detail?.fields?.length || 0) + 1;
+
+    this.creatingField = true;
+
+    this.municipioService.createLocalFormField(this.formId, {
+      label: cleanLabel,
+      type: cleanType,
+      options,
+      required,
+      field_order: nextOrder
+    }).subscribe({
+      next: () => {
+        this.creatingField = false;
+        this.fieldSuccessMessage = 'Campo agregado correctamente.';
+        this.fieldErrorMessage = '';
+
+        if (labelInput) {
+          labelInput.value = '';
+        }
+
+        if (optionsInput) {
+          optionsInput.value = '';
+        }
+
+        if (requiredInput) {
+          requiredInput.checked = true;
+        }
+
+        this.loadDetail();
+      },
+      error: (error) => {
+        this.creatingField = false;
+        this.fieldErrorMessage = error?.error?.message || 'No se pudo agregar el campo. Recordá que solo podés editar relevamientos locales propios.';
+      }
+    });
+  }
+
+  parseOptionsForField(type: MunicipioFormField['type'], optionsText: string): string[] | null {
+    if (type !== 'select' && type !== 'multiselect') {
+      return null;
+    }
+
+    return String(optionsText || '')
+      .split(/\r?\n|,/)
+      .map((option) => option.trim())
+      .filter((option) => option.length > 0);
   }
 
   buildSubmissionForm(): void {

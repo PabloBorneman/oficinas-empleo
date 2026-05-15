@@ -34,7 +34,73 @@
 
     <section class="content-grid">
       <article class="panel">
-        <h2>Campos a completar</h2>
+        <div class="panel-header compact">
+          <div>
+            <h2>Campos a completar</h2>
+            <p>Si este relevamiento fue creado por tu oficina, podés agregar campos antes de cargar respuestas.</p>
+          </div>
+        </div>
+
+        <form
+          class="field-builder"
+          (submit)="$event.preventDefault(); createLocalField(fieldLabelInput.value, fieldTypeSelect.value, fieldOptionsInput.value, fieldRequiredInput.checked, fieldLabelInput, fieldOptionsInput, fieldRequiredInput)"
+        >
+          <h3>Agregar campo al relevamiento local</h3>
+
+          <label class="form-field">
+            <span>Nombre del campo *</span>
+            <input
+              #fieldLabelInput
+              type="text"
+              placeholder="Ej: Edad"
+              autocomplete="off"
+            />
+          </label>
+
+          <label class="form-field">
+            <span>Tipo de campo</span>
+            <select #fieldTypeSelect>
+              <option value="text">Texto</option>
+              <option value="textarea">Texto largo</option>
+              <option value="number">Número</option>
+              <option value="select">Selección</option>
+              <option value="multiselect">Selección múltiple</option>
+              <option value="boolean">Sí / No</option>
+              <option value="date">Fecha</option>
+            </select>
+          </label>
+
+          <label class="form-field">
+            <span>Opciones</span>
+            <textarea
+              #fieldOptionsInput
+              rows="3"
+              placeholder="Solo para selección o selección múltiple. Ej: Mañana, Tarde, Noche"
+            ></textarea>
+            <small>Podés separar opciones con coma o una por línea.</small>
+          </label>
+
+          <label class="checkbox-option field-required">
+            <input #fieldRequiredInput type="checkbox" checked />
+            <span>Campo obligatorio</span>
+          </label>
+
+          @if (fieldErrorMessage) {
+            <p class="error-text">{{ fieldErrorMessage }}</p>
+          }
+
+          @if (fieldSuccessMessage) {
+            <p class="success-text small-success">{{ fieldSuccessMessage }}</p>
+          }
+
+          <button type="submit" class="primary-button" [disabled]="creatingField">
+            {{ creatingField ? 'Agregando...' : 'Agregar campo' }}
+          </button>
+        </form>
+
+        @if (detail.fields.length === 0) {
+          <p class="empty">Todavía no hay campos cargados para este relevamiento.</p>
+        }
 
         <div class="list">
           @for (field of detail.fields; track field.id) {
@@ -58,7 +124,7 @@
           </div>
 
           @if (!showSubmissionForm) {
-            <button type="button" class="primary-button" (click)="openSubmissionForm()">
+            <button type="button" class="primary-button" [disabled]="detail.fields.length === 0" (click)="openSubmissionForm()">
               Nueva respuesta
             </button>
           }

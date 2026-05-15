@@ -334,3 +334,43 @@ h3 {
   width: 16px;
   height: 16px;
 }
+
+
+.field-builder {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 18px;
+  padding: 14px;
+  border-radius: 16px;
+  background: #f8fafc;
+  border: 1px solid #dbeafe;
+}
+
+.field-builder h3 {
+  margin: 0;
+  color: #0f172a;
+}
+
+.panel-header.compact {
+  margin-bottom: 14px;
+}
+
+.field-required {
+  justify-content: flex-start;
+  font-weight: 800;
+  color: #334155;
+}
+
+.small-success {
+  margin: 0;
+}
+
+.field-builder .primary-button {
+  justify-self: start;
+}
+
+@media (max-width: 800px) {
+  .field-builder .primary-button {
+    width: 100%;
+  }
+}

@@ -100,6 +100,20 @@ export interface MunicipioSubmissionsDetailResponse {
   submissions: MunicipioSubmission[];
 }
 
+export interface CreateLocalFieldRequest {
+  label: string;
+  type: MunicipioFormField['type'];
+  options: string[] | null;
+  required: boolean;
+  field_order: number;
+}
+
+export interface CreateLocalFieldResponse {
+  ok: boolean;
+  message: string;
+  field: MunicipioFormField;
+}
+
 export interface CreateSubmissionRequest {
   values: {
     field_id: number;
@@ -176,6 +190,10 @@ export class MunicipioService {
 
   getFormDetail(formId: number): Observable<MunicipioFormDetailResponse> {
     return this.http.get<MunicipioFormDetailResponse>(`/api/municipio/forms/${formId}`);
+  }
+
+  createLocalFormField(formId: number, payload: CreateLocalFieldRequest): Observable<CreateLocalFieldResponse> {
+    return this.http.post<CreateLocalFieldResponse>(`/api/municipio/forms/${formId}/fields`, payload);
   }
 
   getFormSubmissionsDetail(formId: number): Observable<MunicipioSubmissionsDetailResponse> {
