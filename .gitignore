@@ -22,3 +22,6 @@ backend/data/*.db-*
 # Sistema
 .DS_Store
 Thumbs.db
+backend/data/*.sqlite
+backend/data/*.sqlite3
+backend/data/*.backup-antes-git.db

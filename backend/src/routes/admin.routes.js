@@ -1,5 +1,6 @@
 ﻿const express = require('express');
 const bcrypt = require('bcryptjs');
+const { generateFormReportPdf, generateFormHistoryPdf } = require('../utils/reportPdf');
 
 const { getDatabase } = require('../db/database');
 const { authenticateToken, requireRole } = require('../middlewares/auth.middleware');
@@ -980,6 +981,58 @@ router.get('/forms/:formId/comparison', async (req, res) => {
 });
 
 
+
+router.get('/forms/:formId/report/pdf', async (req, res) => {
+  try {
+    const formId = Number(req.params.formId);
+
+    if (!formId) {
+      return res.status(400).json({
+        ok: false,
+        message: 'formId invalido'
+      });
+    }
+
+    await generateFormReportPdf(formId, res);
+  } catch (error) {
+    console.error('Error generando informe PDF:', error);
+
+    if (!res.headersSent) {
+      return res.status(500).json({
+        ok: false,
+        message: 'Error interno al generar informe PDF'
+      });
+    }
+
+    return res.end();
+  }
+});
+
+router.get('/forms/:formId/history/pdf', async (req, res) => {
+  try {
+    const formId = Number(req.params.formId);
+
+    if (!formId) {
+      return res.status(400).json({
+        ok: false,
+        message: 'formId invalido'
+      });
+    }
+
+    await generateFormHistoryPdf(formId, res);
+  } catch (error) {
+    console.error('Error generando historial PDF:', error);
+
+    if (!res.headersSent) {
+      return res.status(500).json({
+        ok: false,
+        message: 'Error interno al generar historial PDF'
+      });
+    }
+
+    return res.end();
+  }
+});
 router.patch('/forms/:formId/archive', async (req, res) => {
   try {
     const formId = Number(req.params.formId);
@@ -1249,6 +1302,8 @@ router.get('/forms/:formId/detail', async (req, res) => {
   }
 });
 module.exports = router;
+
+
 
 
 

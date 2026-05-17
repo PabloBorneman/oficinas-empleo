@@ -265,6 +265,18 @@ export class AdminService {
     return this.http.get<AdminFormSubmissionsResponse>(`/api/admin/forms/${formId}/submissions`);
   }
 
+  downloadFormReportPdf(formId: number): Observable<Blob> {
+    return this.http.get(`/api/admin/forms/${formId}/report/pdf`, {
+      responseType: 'blob'
+    });
+  }
+
+  downloadFormHistoryPdf(formId: number): Observable<Blob> {
+    return this.http.get(`/api/admin/forms/${formId}/history/pdf`, {
+      responseType: 'blob'
+    });
+  }
+
   archiveForm(formId: number): Observable<ArchiveAdminFormResponse> {
     return this.http.patch<ArchiveAdminFormResponse>(`/api/admin/forms/${formId}/archive`, {});
   }
@@ -281,4 +293,6 @@ export class AdminService {
     return this.http.post<AssignFormUsersResponse>(`/api/admin/forms/${formId}/assignments`, payload);
   }
 }
+
+
 

@@ -216,6 +216,42 @@
       }
     </section>
 
+    <section class="quick-actions-panel">
+      <div>
+        <p class="eyebrow">Acciones rápidas</p>
+        <h2>Descargas del relevamiento</h2>
+        <p>Generá el informe completo, descargá el historial de respuestas o exportá los datos filtrados.</p>
+      </div>
+
+      <div class="quick-actions-buttons">
+        <button
+          type="button"
+          class="report-download-button"
+          [disabled]="reportDownloading"
+          (click)="downloadFullReportPdf()"
+        >
+          {{ reportDownloading ? 'Generando informe...' : 'Descargar informe completo' }}
+        </button>
+
+        <button
+          type="button"
+          class="history-download-button"
+          [disabled]="historyDownloading"
+          (click)="downloadHistoryPdf()"
+        >
+          {{ historyDownloading ? 'Generando historial...' : 'Descargar historial de respuestas' }}
+        </button>
+
+        <button type="button" class="export-button" (click)="exportSubmissionsCsv()">
+          Exportar CSV
+        </button>
+      </div>
+
+      @if (reportErrorMessage) {
+        <p class="error-text">{{ reportErrorMessage }}</p>
+      }
+    </section>
+
     <section class="stats-panel">
       <div class="stats-header">
         <div>
@@ -224,16 +260,31 @@
           <p>Seleccioná un campo para ver el resultado unificado y la comparación por municipio.</p>
         </div>
 
-        <label class="field-selector">
-          Campo
-          <select [value]="selectedFieldId" (change)="onStatsFieldChange($event)">
-            @for (field of detail.fields; track field.id) {
-              <option [value]="field.id">
-                {{ formatText(field.label) }}
-              </option>
-            }
-          </select>
-        </label>
+        <div class="stats-controls">
+          <label class="field-selector">
+            Campo
+            <select [value]="selectedFieldId" (change)="onStatsFieldChange($event)">
+              @for (field of detail.fields; track field.id) {
+                <option [value]="field.id">
+                  {{ formatText(field.label) }}
+                </option>
+              }
+            </select>
+          </label>
+
+          <label class="field-selector comparison-filter">
+            Comparativa
+            <select [value]="selectedComparisonMunicipality" (change)="onComparisonMunicipalityChange($event)">
+              <option value="">Todos los municipios</option>
+
+              @for (municipality of availableComparisonMunicipalities; track municipality) {
+                <option [value]="municipality">
+                  {{ municipality }}
+                </option>
+              }
+            </select>
+          </label>
+        </div>
       </div>
 
       <div class="stats-grid">
@@ -251,62 +302,222 @@
           @if (!statsLoading && !statsErrorMessage && stats) {
             <p class="chart-total">Total respuestas: {{ stats.total }}</p>
 
-            <div class="bars">
-              @for (item of stats.items; track item.label) {
-                <div class="bar-row">
-                  <div class="bar-info">
-                    <strong>{{ formatText(item.label) }}</strong>
-                    <span>{{ item.count }} respuestas · {{ item.percentage }}%</span>
-                  </div>
+            <div class="smart-chart-mode">
+              <div>
+                <strong>{{ getStatsChartTitle() }}</strong>
+                <span>{{ getStatsChartDescription() }}</span>
+              </div>
+            </div>
 
-                  <div class="bar-track">
-                    <div class="bar-fill" [style.width]="getPercentageWidth(item.percentage)"></div>
+            @if (getStatsChartMode() === 'donut') {
+              <div class="donut-layout">
+                <div class="donut-chart" [style.background]="getDonutGradient(getSortedStatsItems())">
+                  <div class="donut-center">
+                    <strong>{{ getTopStatsItem()?.percentage || 0 }}%</strong>
+                    <span>{{ formatText(getTopStatsItem()?.label || 'Sin datos') }}</span>
                   </div>
                 </div>
+
+                <div class="chart-legend">
+                  @for (item of getSortedStatsItems(); track item.label; let itemIndex = $index) {
+                    <div class="legend-row">
+                      <span class="legend-dot" [style.background]="getVisualItemColorForLabel(item.label)"></span>
+                      <strong>{{ formatText(item.label) }}</strong>
+                      <em>{{ item.count }} · {{ item.percentage }}%</em>
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+
+            @if (getStatsChartMode() === 'columns') {
+              <div class="columns-chart">
+                @for (item of getSortedStatsItems(); track item.label; let itemIndex = $index) {
+                  <div class="column-item">
+                    <div class="column-value">{{ item.count }}</div>
+
+                    <div class="column-track">
+                      <div
+                        class="column-fill"
+                        [style.height]="getColumnHeight(item.count, getSortedStatsItems())"
+                        [style.background]="getVisualItemColorForLabel(item.label)"
+                      ></div>
+                    </div>
+
+                    <strong>{{ formatText(item.label) }}</strong>
+                    <span>{{ item.percentage }}%</span>
+                  </div>
+                }
+              </div>
+            }
+
+            @if (getStatsChartMode() === 'horizontal') {
+              <div class="horizontal-bars-chart">
+                @for (item of getSortedStatsItems(); track item.label) {
+                  <div class="horizontal-bar-row">
+                    <strong>{{ formatText(item.label) }}</strong>
+
+                    <div class="horizontal-bar-track">
+                      <div
+                        class="horizontal-bar-fill"
+                        [style.width]="getHorizontalBarWidth(item.count, getSortedStatsItems())"
+                        [style.background]="getVisualItemColorForLabel(item.label)"
+                      ></div>
+                    </div>
+
+                    <span>{{ item.count }} · {{ item.percentage }}%</span>
+                  </div>
+                }
+              </div>
+            }
+
+            @if (getStatsChartMode() === 'summary') {
+              @let numericSummary = getNumericSummary();
+
+              <div class="numeric-summary-grid">
+                <div>
+                  <span>Total numérico</span>
+                  <strong>{{ numericSummary.total }}</strong>
+                </div>
+
+                <div>
+                  <span>Promedio</span>
+                  <strong>{{ numericSummary.average }}</strong>
+                </div>
+
+                <div>
+                  <span>Mínimo</span>
+                  <strong>{{ numericSummary.min }}</strong>
+                </div>
+
+                <div>
+                  <span>Máximo</span>
+                  <strong>{{ numericSummary.max }}</strong>
+                </div>
+              </div>
+
+              @if (getSortedStatsItems().length > 0) {
+                <div class="columns-chart compact">
+                  @for (item of getSortedStatsItems(); track item.label; let itemIndex = $index) {
+                    <div class="column-item">
+                      <div class="column-value">{{ item.count }}</div>
+
+                      <div class="column-track">
+                        <div
+                          class="column-fill"
+                          [style.height]="getColumnHeight(item.count, getSortedStatsItems())"
+                          [style.background]="getVisualItemColorForLabel(item.label)"
+                        ></div>
+                      </div>
+
+                      <strong>{{ formatText(item.label) }}</strong>
+                      <span>{{ item.percentage }}%</span>
+                    </div>
+                  }
+                </div>
               }
-            </div>
+            }
+
+            @if (getStatsChartMode() === 'table') {
+              <div class="field-preview-table">
+                <div class="field-preview-header">
+                  <span>Municipio</span>
+                  <span>Valor cargado</span>
+                </div>
+
+                @for (preview of getSelectedFieldPreviewValues(); track $index) {
+                  <div class="field-preview-row">
+                    <span>{{ preview.municipality_name }}</span>
+                    <strong>{{ preview.value }}</strong>
+                  </div>
+                }
+
+                @if (getSelectedFieldPreviewValues().length === 0) {
+                  <p class="empty">Todavía no hay datos cargados para este campo.</p>
+                }
+              </div>
+            }
           }
         </article>
 
         <article class="chart-card">
           <h3>Comparativa por municipio</h3>
 
-          @if (comparisonLoading) {
+          @if (isTerritorialStatsField()) {
+            <div class="comparison-context-message">
+              <strong>Este campo ya representa la distribución territorial.</strong>
+              <p>Para comparar respuestas por municipio, seleccioná otro campo del relevamiento, por ejemplo género, edad, situación laboral o capacitaciones de interés.</p>
+            </div>
+          }
+
+          @if (!isTerritorialStatsField() && comparisonLoading) {
             <p class="empty">Cargando comparativa...</p>
           }
 
-          @if (comparisonErrorMessage) {
+          @if (!isTerritorialStatsField() && comparisonErrorMessage) {
             <p class="error-text">{{ comparisonErrorMessage }}</p>
           }
 
-          @if (!comparisonLoading && !comparisonErrorMessage && comparison) {
+          @if (!isTerritorialStatsField() && !comparisonLoading && !comparisonErrorMessage && comparison) {
             @if (comparison.municipalities.length === 0) {
               <p class="empty">Todavía no hay datos comparativos para este campo.</p>
             }
 
-            <div class="comparison-list">
-              @for (municipality of comparison.municipalities; track municipality.municipality_name) {
-                <div class="municipality-comparison">
-                  <div class="municipality-title">
-                    <strong>{{ municipality.municipality_name }}</strong>
-                    <span>Total: {{ municipality.total }}</span>
-                  </div>
+            @if (!shouldShowComparisonChart()) {
+              <p class="empty">
+                Este campo se muestra como dato individual. Va al detalle del informe, pero no a un gráfico comparativo.
+              </p>
+            }
 
-                  @for (item of municipality.items; track item.label) {
-                    <div class="bar-row small">
-                      <div class="bar-info">
-                        <strong>{{ formatText(item.label) }}</strong>
-                        <span>{{ item.count }} · {{ item.percentage }}%</span>
-                      </div>
-
-                      <div class="bar-track">
-                        <div class="bar-fill secondary" [style.width]="getPercentageWidth(item.percentage)"></div>
-                      </div>
+            @if (shouldShowComparisonChart()) {
+              <div class="comparison-columns-list">
+                @for (municipality of filteredComparisonMunicipalities; track municipality.municipality_name) {
+                  <div class="municipality-comparison">
+                    <div class="municipality-title">
+                      <strong>{{ municipality.municipality_name }}</strong>
+                      <span>Total: {{ municipality.total }}</span>
                     </div>
-                  }
-                </div>
-              }
-            </div>
+
+                    @if (getComparisonChartMode() === 'horizontal') {
+                      <div class="mini-horizontal-bars">
+                        @for (item of getSortedComparisonItems(municipality.items); track item.label) {
+                          <div class="mini-horizontal-row">
+                            <strong>{{ formatText(item.label) }}</strong>
+
+                            <div class="mini-horizontal-track">
+                              <div
+                                class="mini-horizontal-fill"
+                                [style.width]="getHorizontalBarWidth(item.count, getSortedComparisonItems(municipality.items))"
+                                [style.background]="getVisualItemColorForLabel(item.label)"
+                              ></div>
+                            </div>
+
+                            <span>{{ item.count }}</span>
+                          </div>
+                        }
+                      </div>
+                    } @else {
+                      <div class="mini-columns">
+                        @for (item of getSortedComparisonItems(municipality.items); track item.label) {
+                          <div class="mini-column-item">
+                            <div class="mini-column-track">
+                              <div
+                                class="mini-column-fill"
+                                [style.height]="getComparisonColumnHeight(item.count)"
+                                [style.background]="getVisualItemColorForLabel(item.label)"
+                              ></div>
+                            </div>
+
+                            <strong>{{ item.count }}</strong>
+                            <span>{{ formatText(item.label) }}</span>
+                          </div>
+                        }
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+            }
           }
         </article>
       </div>
@@ -316,16 +527,42 @@
       <div class="submissions-header">
         <div>
           <p class="eyebrow">Respuestas cargadas</p>
-          <h2>Detalle de respuestas por oficina</h2>
-          <p>Listado de respuestas individuales cargadas por las oficinas municipales.</p>
+          <h2>Respuestas agrupadas por oficina</h2>
+          <p>
+            Primero se muestra el resumen por municipio. Para ver las respuestas individuales, abrí el historial de cada oficina.
+          </p>
         </div>
 
         @if (filteredSubmissions.length > 0) {
-          <button type="button" class="export-button" (click)="exportSubmissionsCsv()">
-            Exportar CSV
-          </button>
+          <div class="submissions-actions">
+            <button
+              type="button"
+              class="report-button"
+              [disabled]="reportDownloading"
+              (click)="downloadFullReportPdf()"
+            >
+              {{ reportDownloading ? 'Generando informe...' : 'Descargar informe completo' }}
+            </button>
+
+            <button
+              type="button"
+              class="history-download-button"
+              [disabled]="historyDownloading"
+              (click)="downloadHistoryPdf()"
+            >
+              {{ historyDownloading ? 'Generando historial...' : 'Descargar historial de respuestas' }}
+            </button>
+
+            <button type="button" class="export-button" (click)="exportSubmissionsCsv()">
+              Exportar CSV
+            </button>
+          </div>
         }
       </div>
+
+      @if (reportErrorMessage) {
+        <p class="error-text">{{ reportErrorMessage }}</p>
+      }
 
       @if (!submissionsLoading && !submissionsErrorMessage && allSubmissions.length > 0) {
         <div class="submissions-filters">
@@ -379,31 +616,61 @@
         <p class="empty">No hay respuestas que coincidan con los filtros aplicados.</p>
       }
 
-      <div class="admin-submissions-list">
-        @for (submission of filteredSubmissions; track submission.id) {
-          <article class="admin-submission-card">
-            <div class="admin-submission-title">
-              <div>
-                <strong>Respuesta #{{ submission.id }}</strong>
-                <span>{{ submission.created_at }}</span>
+      @if (!submissionsLoading && !submissionsErrorMessage && filteredSubmissions.length > 0) {
+        <div class="municipality-submissions-list">
+          @for (group of groupedFilteredSubmissions; track group.municipality_name) {
+            <article class="municipality-history-card">
+              <div class="municipality-history-summary">
+                <div>
+                  <strong>{{ group.municipality_name }}</strong>
+                  <span>
+                    {{ group.total }} respuestas cargadas
+                    @if (group.latest_created_at) {
+                      · Última carga: {{ group.latest_created_at }}
+                    }
+                  </span>
+                </div>
+
+                <button
+                  type="button"
+                  class="history-toggle-button"
+                  (click)="toggleMunicipalityHistory(group.municipality_name)"
+                >
+                  {{ isMunicipalityHistoryOpen(group.municipality_name) ? 'Ocultar historial' : 'Ver historial' }}
+                </button>
               </div>
 
-              <div class="municipality-badge">
-                {{ formatAdminText(submission.municipality_name) }}
-              </div>
-            </div>
+              @if (isMunicipalityHistoryOpen(group.municipality_name)) {
+                <div class="municipality-history-list">
+                  @for (submission of group.submissions; track submission.id) {
+                    <article class="admin-submission-card compact">
+                      <div class="admin-submission-title">
+                        <div>
+                          <strong>Respuesta #{{ submission.id }}</strong>
+                          <span>{{ submission.created_at }}</span>
+                        </div>
 
-            <div class="admin-values-list">
-              @for (value of submission.values; track value.id) {
-                <div class="admin-value-row">
-                  <span>{{ formatAdminText(value.label) }}</span>
-                  <strong>{{ formatAdminSubmissionValue(value) }}</strong>
+                        <div class="municipality-badge">
+                          {{ formatAdminText(submission.municipality_name) }}
+                        </div>
+                      </div>
+
+                      <div class="admin-values-list compact">
+                        @for (value of submission.values; track value.id) {
+                          <div class="admin-value-row">
+                            <span>{{ formatAdminText(value.label) }}</span>
+                            <strong>{{ formatAdminSubmissionValue(value) }}</strong>
+                          </div>
+                        }
+                      </div>
+                    </article>
+                  }
                 </div>
               }
-            </div>
-          </article>
-        }
-      </div>
+            </article>
+          }
+        </div>
+      }
     </section>
     <section class="content-grid">
       <article class="panel">
@@ -467,6 +734,8 @@
     </section>
   }
 </main>
+
+
 
 
 
