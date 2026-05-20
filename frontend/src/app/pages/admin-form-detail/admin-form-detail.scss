@@ -1661,3 +1661,318 @@ h2 {
     grid-template-columns: 1fr;
   }
 }
+
+
+.report-config-panel {
+  background: #ffffff;
+  border-radius: 24px;
+  padding: 28px;
+  box-shadow: 0 18px 45px rgba(15, 23, 42, 0.08);
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  margin-bottom: 24px;
+}
+
+.report-config-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 20px;
+
+  h2 {
+    margin: 0;
+    font-size: 24px;
+    color: #0f172a;
+  }
+
+  p {
+    margin: 8px 0 0;
+    color: #475569;
+  }
+}
+
+.report-config-list {
+  display: grid;
+  gap: 12px;
+}
+
+.report-config-card {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) minmax(160px, 190px) minmax(220px, 280px);
+  align-items: center;
+  gap: 18px;
+  padding: 16px 18px;
+  border: 1px solid #dbe4ef;
+  border-radius: 18px;
+  background: #f8fafc;
+}
+
+.report-config-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+
+  strong {
+    color: #0f172a;
+    font-size: 16px;
+    line-height: 1.2;
+  }
+
+  span {
+    width: fit-content;
+    padding: 3px 9px;
+    border-radius: 999px;
+    background: #e2e8f0;
+    color: #475569;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+}
+
+.report-config-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  color: #334155;
+  font-weight: 700;
+
+  input {
+    width: 18px;
+    height: 18px;
+    accent-color: #13304d;
+  }
+}
+
+.report-config-select {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  span {
+    font-size: 12px;
+    font-weight: 800;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  select {
+    width: 100%;
+    min-height: 38px;
+    border: 1px solid #cbd5e1;
+    border-radius: 12px;
+    padding: 8px 12px;
+    background: #ffffff;
+    color: #0f172a;
+    font-weight: 700;
+  }
+}
+
+.report-config-saving {
+  color: #64748b;
+  font-weight: 700;
+}
+
+@media (max-width: 900px) {
+  .report-config-card {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+}
+
+
+/* Ajuste desplegable de configuración del informe */
+.report-config-panel {
+  width: min(100% - 32px, 1136px);
+  margin: 24px auto;
+  padding: 0;
+  overflow: hidden;
+}
+
+.report-config-summary {
+  list-style: none;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 18px;
+  padding: 28px;
+}
+
+.report-config-summary::-webkit-details-marker {
+  display: none;
+}
+
+.report-config-summary h2 {
+  margin: 0;
+}
+
+.report-config-summary p {
+  margin: 8px 0 0;
+}
+
+.report-config-toggle {
+  flex: 0 0 auto;
+  border: 1px solid #cbd5e1;
+  background: #f8fafc;
+  color: #13304d;
+  border-radius: 999px;
+  padding: 10px 16px;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.report-config-panel[open] .report-config-toggle {
+  background: #13304d;
+  color: #ffffff;
+  border-color: #13304d;
+}
+
+.report-config-content {
+  padding: 0 28px 28px;
+}
+
+.report-config-card {
+  grid-template-columns: minmax(220px, 1fr) minmax(160px, 190px) minmax(220px, 280px);
+}
+
+@media (max-width: 900px) {
+  .report-config-panel {
+    width: calc(100% - 24px);
+  }
+
+  .report-config-summary {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .report-config-toggle {
+    width: 100%;
+    text-align: center;
+  }
+}
+
+/* AJUSTE DEFINITIVO: configuración informe con mismas dimensiones */
+.report-config-panel {
+  max-width: 1180px !important;
+  width: calc(100% - 32px) !important;
+  margin: 0 auto 20px !important;
+  padding: 0 !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+  border-radius: 22px !important;
+  background: #ffffff !important;
+  border: 1px solid rgba(15, 23, 42, 0.06) !important;
+  box-shadow: 0 14px 35px rgba(15, 23, 42, 0.08) !important;
+}
+
+.report-config-summary {
+  min-height: auto !important;
+  padding: 24px !important;
+}
+
+.report-config-summary h2 {
+  margin: 0 0 6px !important;
+  color: #0f172a !important;
+  font-size: 22px !important;
+  line-height: 1.1 !important;
+}
+
+.report-config-summary p {
+  margin: 0 !important;
+  color: #536887 !important;
+  font-size: 15px !important;
+}
+
+.report-config-summary .eyebrow {
+  margin: 0 0 4px !important;
+}
+
+.report-config-toggle {
+  border-radius: 12px !important;
+  padding: 12px 16px !important;
+  font-size: 14px !important;
+}
+
+.report-config-content {
+  padding: 0 24px 24px !important;
+}
+
+.report-config-list {
+  gap: 10px !important;
+}
+
+.report-config-card {
+  padding: 14px 16px !important;
+  border-radius: 16px !important;
+  grid-template-columns: minmax(240px, 1fr) 190px 280px !important;
+}
+
+.report-config-select select {
+  min-height: 40px !important;
+  border-radius: 12px !important;
+}
+
+@media (max-width: 900px) {
+  .report-config-panel {
+    width: calc(100% - 24px) !important;
+  }
+
+  .report-config-card {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* AJUSTE DEFINITIVO: tipo de campo en español */
+.report-config-field span {
+  text-transform: none !important;
+  letter-spacing: 0 !important;
+}
+
+/* AJUSTE DEFINITIVO: columnas campos y municipios */
+.content-grid {
+  max-width: 1180px !important;
+  width: calc(100% - 32px) !important;
+  margin: 0 auto 20px !important;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1.45fr) minmax(340px, 0.85fr) !important;
+  gap: 18px !important;
+  align-items: stretch !important;
+}
+
+.content-grid > .panel {
+  width: 100% !important;
+  max-width: none !important;
+  margin: 0 !important;
+  box-sizing: border-box !important;
+  height: 100% !important;
+}
+
+.content-grid > .panel h2 {
+  margin-top: 0 !important;
+}
+
+.content-grid > .panel .list {
+  max-height: 640px !important;
+  overflow: auto !important;
+  padding-right: 4px !important;
+}
+
+.content-grid > .panel .list-item {
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+@media (max-width: 900px) {
+  .content-grid {
+    width: calc(100% - 24px) !important;
+    grid-template-columns: 1fr !important;
+  }
+
+  .content-grid > .panel .list {
+    max-height: none !important;
+    overflow: visible !important;
+    padding-right: 0 !important;
+  }
+}

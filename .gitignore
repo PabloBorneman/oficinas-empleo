@@ -25,3 +25,6 @@ Thumbs.db
 backend/data/*.sqlite
 backend/data/*.sqlite3
 backend/data/*.backup-antes-git.db
+
+# Backups locales de base de datos
+backend/backups/

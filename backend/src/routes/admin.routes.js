@@ -16,6 +16,14 @@ const FIELD_TYPES = [
   'date',
   'textarea'
 ];
+const REPORT_CHART_TYPES = [
+  'auto',
+  'donut',
+  'columns',
+  'horizontal',
+  'summary',
+  'table'
+];
 
 router.use(authenticateToken);
 router.use(requireRole('admin'));
@@ -41,6 +49,7 @@ router.get('/users', async (req, res) => {
       active,
       created_at
     FROM users
+    WHERE active = 1
     ORDER BY id ASC;
   `);
 
@@ -274,7 +283,9 @@ router.get('/forms/:formId/fields', async (req, res) => {
       type,
       options,
       required,
-      field_order,
+        field_order,
+        chart_type,
+        include_in_report,
       created_at
     FROM form_fields
     WHERE form_id = ?
@@ -286,7 +297,9 @@ router.get('/forms/:formId/fields', async (req, res) => {
   const parsedFields = fields.map((field) => ({
     ...field,
     options: field.options ? JSON.parse(field.options) : null,
-    required: field.required === 1
+    required: field.required === 1,
+    chart_type: field.chart_type || 'auto',
+    include_in_report: field.include_in_report === 1
   }));
 
   res.json({
@@ -307,13 +320,7 @@ router.post('/forms/:formId/fields', async (req, res) => {
       });
     }
 
-    const {
-      label,
-      type,
-      options,
-      required,
-      field_order
-    } = req.body;
+    const { label, type, options, required, field_order } = req.body;
 
     if (!label || !type) {
       return res.status(400).json({
@@ -405,6 +412,8 @@ router.post('/forms/:formId/fields', async (req, res) => {
         options,
         required,
         field_order,
+        chart_type,
+        include_in_report,
         created_at
       FROM form_fields
       WHERE id = ?
@@ -679,6 +688,106 @@ router.get('/forms/:formId/submissions', async (req, res) => {
   }
 });
 
+
+
+router.patch('/forms/:formId/fields/:fieldId/report-config', async (req, res) => {
+  try {
+    const formId = Number(req.params.formId);
+    const fieldId = Number(req.params.fieldId);
+    const chartType = String(req.body.chart_type || 'auto').trim();
+
+    const includeInReport =
+      req.body.include_in_report === false ||
+      req.body.include_in_report === 0 ||
+      req.body.include_in_report === 'false'
+        ? 0
+        : 1;
+
+    if (!formId || !fieldId) {
+      return res.status(400).json({
+        ok: false,
+        message: 'formId o fieldId invalido'
+      });
+    }
+
+    if (!REPORT_CHART_TYPES.includes(chartType)) {
+      return res.status(400).json({
+        ok: false,
+        message: 'Tipo de grafico invalido'
+      });
+    }
+
+    const db = await getDatabase();
+
+    const field = await db.get(
+      `
+      SELECT id
+      FROM form_fields
+      WHERE id = ?
+        AND form_id = ?
+      `,
+      [fieldId, formId]
+    );
+
+    if (!field) {
+      return res.status(404).json({
+        ok: false,
+        message: 'Campo no encontrado'
+      });
+    }
+
+    await db.run(
+      `
+      UPDATE form_fields
+      SET
+        chart_type = ?,
+        include_in_report = ?
+      WHERE id = ?
+        AND form_id = ?
+      `,
+      [chartType, includeInReport, fieldId, formId]
+    );
+
+    const updatedField = await db.get(
+      `
+      SELECT
+        id,
+        form_id,
+        label,
+        type,
+        options,
+        required,
+        field_order,
+        chart_type,
+        include_in_report,
+        created_at
+      FROM form_fields
+      WHERE id = ?
+        AND form_id = ?
+      `,
+      [fieldId, formId]
+    );
+
+    return res.json({
+      ok: true,
+      message: 'Configuracion del campo actualizada.',
+      field: {
+        ...updatedField,
+        options: updatedField.options ? JSON.parse(updatedField.options) : null,
+        required: updatedField.required === 1,
+        chart_type: updatedField.chart_type || 'auto',
+        include_in_report: updatedField.include_in_report === 1
+      }
+    });
+  } catch (error) {
+    console.error('Error updating field report config:', error);
+
+    return res.status(500).json({
+      ok: false,
+      message: 'Error al actualizar la configuracion del campo'
+    });
+  }
+});
 router.get('/forms/:formId/stats', async (req, res) => {
   try {
     const formId = Number(req.params.formId);
@@ -722,7 +831,9 @@ router.get('/forms/:formId/stats', async (req, res) => {
         type,
         options,
         required,
-        field_order
+        field_order,
+        chart_type,
+        include_in_report
       FROM form_fields
       WHERE id = ?
         AND form_id = ?
@@ -857,7 +968,9 @@ router.get('/forms/:formId/comparison', async (req, res) => {
         type,
         options,
         required,
-        field_order
+        field_order,
+        chart_type,
+        include_in_report
       FROM form_fields
       WHERE id = ?
         AND form_id = ?
@@ -1226,6 +1339,8 @@ router.get('/forms/:formId/detail', async (req, res) => {
         options,
         required,
         field_order,
+        chart_type,
+        include_in_report,
         created_at
       FROM form_fields
       WHERE form_id = ?
@@ -1237,7 +1352,9 @@ router.get('/forms/:formId/detail', async (req, res) => {
     const parsedFields = fields.map((field) => ({
       ...field,
       options: field.options ? JSON.parse(field.options) : null,
-      required: field.required === 1
+      required: field.required === 1,
+    chart_type: field.chart_type || 'auto',
+    include_in_report: field.include_in_report === 1
     }));
 
     const assignments = await db.all(
@@ -1302,6 +1419,8 @@ router.get('/forms/:formId/detail', async (req, res) => {
   }
 });
 module.exports = router;
+
+
 
 
 

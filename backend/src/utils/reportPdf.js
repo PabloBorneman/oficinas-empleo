@@ -915,6 +915,8 @@ async function getReportData(formId) {
       options,
       required,
       field_order,
+      chart_type,
+      include_in_report,
       created_at
     FROM form_fields
     WHERE form_id = ?
@@ -1010,13 +1012,52 @@ function findFieldByLabels(fields, labels) {
   });
 }
 
+function shouldIncludeFieldInReport(field) {
+  if (!field) return false;
+  return field.include_in_report === undefined ||
+    field.include_in_report === null ||
+    field.include_in_report === 1 ||
+    field.include_in_report === true;
+}
+
+function getConfiguredReportChartMode(field, itemsCount = 0, forcedMode = null) {
+  const chartType = String(field.chart_type || 'auto').trim();
+
+  if (chartType === 'auto') {
+    return forcedMode || getReportChartMode(field, itemsCount);
+  }
+
+  if (chartType === 'summary') {
+    if (field.type === 'date') return 'date-summary';
+    if (field.type === 'number') return 'numeric';
+    return 'table';
+  }
+
+  if (['donut', 'columns', 'horizontal', 'table'].includes(chartType)) {
+    return chartType;
+  }
+
+  return forcedMode || getReportChartMode(field, itemsCount);
+}
+
+function shouldShowTerritorialDistribution(fields) {
+  const municipalityField = findFieldByLabels(fields, ['Municipio']);
+  const localityField = findFieldByLabels(fields, ['Localidad']);
+
+  if (!municipalityField && !localityField) {
+    return true;
+  }
+
+  return [municipalityField, localityField].some((field) => shouldIncludeFieldInReport(field));
+}
+
 function drawFieldByLabel(doc, fields, submissions, labels, customTitle = null, forcedMode = null) {
   const field = findFieldByLabels(fields, labels);
 
-  if (!field) return;
+  if (!field || !shouldIncludeFieldInReport(field)) return;
 
   const items = getFieldItems(field, submissions);
-  const mode = forcedMode || getReportChartMode(field, items.length);
+  const mode = getConfiguredReportChartMode(field, items.length, forcedMode);
   const title = customTitle || field.label;
 
   if (mode === 'skip' || mode === 'table') return;
@@ -1121,7 +1162,7 @@ function getMultiselectTotalSelections(fields, submissions, labels) {
 function getTopItemText(fields, submissions, labels) {
   const field = findFieldByLabels(fields, labels);
 
-  if (!field) return 'Sin datos suficientes.';
+  if (!field || !shouldIncludeFieldInReport(field)) return 'Campo no incluido en el informe.';
 
   const items = getFieldItems(field, submissions);
 
@@ -1152,7 +1193,7 @@ function drawDisabilityTypeChart(doc, fields, submissions) {
 
   const field = findFieldByLabels(fields, ['Tipo de discapacidad']);
 
-  if (!field) {
+  if (!field || !shouldIncludeFieldInReport(field)) {
     return;
   }
 
@@ -1308,9 +1349,10 @@ async function generateFormReportPdf(formId, res) {
   addMetricCards(doc, [
     { label: 'Total de respuestas', value: submissionsWithValues.length },
     { label: 'Municipios participantes', value: submissionsByMunicipality.length },
-    { label: 'Campos relevados', value: fields.length },
+    { label: 'Campos en informe', value: fields.filter((field) => shouldIncludeFieldInReport(field)).length },
     { label: 'Mayor carga', value: topMunicipality ? topMunicipality.municipality_name : 'Sin dato' }
-  ]);
+  ]);  if (shouldShowTerritorialDistribution(fields)) {
+
 
   addSectionTitle(doc, 'Distribución territorial', 'Cantidad de respuestas cargadas por cada municipio participante.');
 
@@ -1327,6 +1369,8 @@ async function generateFormReportPdf(formId, res) {
     'respuestas',
     'Distribución territorial de las respuestas cargadas. Se muestran los municipios con mayor cantidad de registros.'
   );
+
+  }
 
   drawFieldByLabel(
     doc,

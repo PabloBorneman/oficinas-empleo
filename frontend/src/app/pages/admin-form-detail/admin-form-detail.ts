@@ -6,6 +6,7 @@ import {
   AdminFormAssignment,
   AdminFormDetailResponse,
   AdminFormField,
+  AdminReportChartType,
   AdminService,
   AdminStatsItem,
   AdminStatsResponse,
@@ -83,6 +84,19 @@ export class AdminFormDetailComponent implements OnInit {
   reportDownloading = false;
   historyDownloading = false;
   reportErrorMessage = '';
+
+  reportConfigSavingFieldId = 0;
+  reportConfigSuccessMessage = '';
+  reportConfigErrorMessage = '';
+
+  reportChartTypes: { value: AdminReportChartType; label: string }[] = [
+    { value: 'auto', label: 'Automático' },
+    { value: 'donut', label: 'Dona' },
+    { value: 'columns', label: 'Columnas' },
+    { value: 'horizontal', label: 'Barras horizontales' },
+    { value: 'summary', label: 'Resumen numérico' },
+    { value: 'table', label: 'Tabla / sin gráfico' }
+  ];
   submissionsResponse: AdminFormSubmissionsResponse | null = null;
 
   archivingForm = false;
@@ -554,6 +568,79 @@ export class AdminFormDetailComponent implements OnInit {
     });
   }
 
+  getFieldTypeLabel(type: string): string {
+    const labels: Record<string, string> = {
+      text: 'Texto',
+      textarea: 'Texto largo',
+      number: 'Número',
+      select: 'Selección',
+      multiselect: 'Selección múltiple',
+      boolean: 'Sí / No',
+      date: 'Fecha'
+    };
+
+    return labels[type] || type;
+  }
+
+  getReportChartTypeLabel(chartType: string | null | undefined): string {
+    const option = this.reportChartTypes.find((item) => item.value === chartType);
+    return option?.label || 'Automático';
+  }
+
+  onFieldReportChartTypeChange(field: AdminFormField, event: Event): void {
+    const select = event.target as HTMLSelectElement;
+    const chartType = select.value as AdminReportChartType;
+
+    this.saveFieldReportConfig(field, chartType, field.include_in_report);
+  }
+
+  onFieldIncludeInReportChange(field: AdminFormField, event: Event): void {
+    const input = event.target as HTMLInputElement;
+
+    this.saveFieldReportConfig(
+      field,
+      field.chart_type || 'auto',
+      input.checked
+    );
+  }
+
+  saveFieldReportConfig(
+    field: AdminFormField,
+    chartType: AdminReportChartType,
+    includeInReport: boolean
+  ): void {
+    if (!this.detail || this.reportConfigSavingFieldId) {
+      return;
+    }
+
+    this.reportConfigSavingFieldId = field.id;
+    this.reportConfigSuccessMessage = '';
+    this.reportConfigErrorMessage = '';
+
+    this.adminService.updateFieldReportConfig(this.formId, field.id, {
+      chart_type: chartType,
+      include_in_report: includeInReport
+    }).subscribe({
+      next: (response) => {
+        this.reportConfigSavingFieldId = 0;
+        this.reportConfigSuccessMessage = response.message || 'Configuración actualizada.';
+
+        if (this.detail) {
+          this.detail = {
+            ...this.detail,
+            fields: this.detail.fields.map((currentField) =>
+              currentField.id === response.field.id ? response.field : currentField
+            )
+          };
+        }
+      },
+      error: (error) => {
+        this.reportConfigSavingFieldId = 0;
+        this.reportConfigErrorMessage = error?.error?.message || 'No se pudo actualizar la configuración del campo.';
+      }
+    });
+  }
+
   downloadFullReportPdf(): void {
     if (!this.detail || this.reportDownloading) {
       return;
@@ -625,7 +712,7 @@ export class AdminFormDetailComponent implements OnInit {
   }
 
   exportSubmissionsCsv(): void {
-    const submissions = this.filteredSubmissions;
+    const submissions = this.submissionsResponse?.submissions || [];
 
     if (submissions.length === 0) {
       return;

@@ -216,11 +216,80 @@
       }
     </section>
 
+
+    <details class="report-config-panel">
+      <summary class="report-config-summary">
+        <div>
+          <p class="eyebrow">Informe PDF</p>
+          <h2>Configuración del informe</h2>
+          <p>Definí qué campos se incluyen en el PDF y qué gráfico debe usar cada uno.</p>
+        </div>
+
+        <span class="report-config-toggle">Configurar campos</span>
+      </summary>
+
+      <div class="report-config-content">
+        @if (reportConfigSuccessMessage) {
+          <p class="success-text">{{ reportConfigSuccessMessage }}</p>
+        }
+
+        @if (reportConfigErrorMessage) {
+          <p class="error-text">{{ reportConfigErrorMessage }}</p>
+        }
+
+        @if (detail.fields.length === 0) {
+          <p class="empty">Todavía no hay campos para configurar.</p>
+        }
+
+        @if (detail.fields.length > 0) {
+          <div class="report-config-list">
+            @for (field of detail.fields; track field.id) {
+              <article class="report-config-card">
+                <div class="report-config-field">
+                  <strong>{{ formatText(field.label) }}</strong>
+                  <span>{{ getFieldTypeLabel(field.type) }}</span>
+                </div>
+
+                <label class="report-config-check">
+                  <input
+                    type="checkbox"
+                    [checked]="field.include_in_report"
+                    [disabled]="reportConfigSavingFieldId === field.id"
+                    (change)="onFieldIncludeInReportChange(field, $event)"
+                  />
+                  <span>Incluir en informe</span>
+                </label>
+
+                <label class="report-config-select">
+                  <span>Tipo de gráfico</span>
+                  <select
+                    [value]="field.chart_type || 'auto'"
+                    [disabled]="reportConfigSavingFieldId === field.id"
+                    (change)="onFieldReportChartTypeChange(field, $event)"
+                  >
+                    @for (chartType of reportChartTypes; track chartType.value) {
+                      <option [value]="chartType.value">
+                        {{ chartType.label }}
+                      </option>
+                    }
+                  </select>
+                </label>
+
+                @if (reportConfigSavingFieldId === field.id) {
+                  <small class="report-config-saving">Guardando...</small>
+                }
+              </article>
+            }
+          </div>
+        }
+      </div>
+    </details>
+
     <section class="quick-actions-panel">
       <div>
         <p class="eyebrow">Acciones rápidas</p>
         <h2>Descargas del relevamiento</h2>
-        <p>Generá el informe completo, descargá el historial de respuestas o exportá los datos filtrados.</p>
+        <p>Generá el informe completo, descargá el historial de respuestas o exportá todas las respuestas en CSV.</p>
       </div>
 
       <div class="quick-actions-buttons">
@@ -532,32 +601,6 @@
             Primero se muestra el resumen por municipio. Para ver las respuestas individuales, abrí el historial de cada oficina.
           </p>
         </div>
-
-        @if (filteredSubmissions.length > 0) {
-          <div class="submissions-actions">
-            <button
-              type="button"
-              class="report-button"
-              [disabled]="reportDownloading"
-              (click)="downloadFullReportPdf()"
-            >
-              {{ reportDownloading ? 'Generando informe...' : 'Descargar informe completo' }}
-            </button>
-
-            <button
-              type="button"
-              class="history-download-button"
-              [disabled]="historyDownloading"
-              (click)="downloadHistoryPdf()"
-            >
-              {{ historyDownloading ? 'Generando historial...' : 'Descargar historial de respuestas' }}
-            </button>
-
-            <button type="button" class="export-button" (click)="exportSubmissionsCsv()">
-              Exportar CSV
-            </button>
-          </div>
-        }
       </div>
 
       @if (reportErrorMessage) {
@@ -685,7 +728,7 @@
             <div class="list-item">
               <div>
                 <strong>{{ field.field_order }}. {{ formatText(field.label) }}</strong>
-                <span>{{ field.type }} · {{ getRequiredLabel(field) }}</span>
+                <span>{{ getFieldTypeLabel(field.type) }} · {{ getRequiredLabel(field) }}</span>
               </div>
 
               <p>{{ getOptionsText(field) }}</p>

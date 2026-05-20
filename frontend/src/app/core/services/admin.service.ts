@@ -58,6 +58,8 @@ export interface AdminFormDetail {
   created_at: string;
 }
 
+export type AdminReportChartType = 'auto' | 'donut' | 'columns' | 'horizontal' | 'summary' | 'table';
+
 export interface AdminFormField {
   id: number;
   form_id: number;
@@ -66,6 +68,8 @@ export interface AdminFormField {
   options: string[] | null;
   required: boolean;
   field_order: number;
+  chart_type: AdminReportChartType;
+  include_in_report: boolean;
   created_at: string;
 }
 
@@ -111,6 +115,17 @@ export interface AdminFormDetailResponse {
   fields: AdminFormField[];
   assignments: AdminFormAssignment[];
   summary: AdminFormSummary;
+}
+
+export interface UpdateAdminFieldReportConfigRequest {
+  chart_type: AdminReportChartType;
+  include_in_report: boolean;
+}
+
+export interface UpdateAdminFieldReportConfigResponse {
+  ok: boolean;
+  message: string;
+  field: AdminFormField;
 }
 
 export interface AdminStatsItem {
@@ -255,6 +270,17 @@ export class AdminService {
 
   getFormStats(formId: number, fieldId: number): Observable<AdminStatsResponse> {
     return this.http.get<AdminStatsResponse>(`/api/admin/forms/${formId}/stats?field_id=${fieldId}`);
+  }
+
+  updateFieldReportConfig(
+    formId: number,
+    fieldId: number,
+    payload: UpdateAdminFieldReportConfigRequest
+  ): Observable<UpdateAdminFieldReportConfigResponse> {
+    return this.http.patch<UpdateAdminFieldReportConfigResponse>(
+      `/api/admin/forms/${formId}/fields/${fieldId}/report-config`,
+      payload
+    );
   }
 
   getFormComparison(formId: number, fieldId: number): Observable<AdminComparisonResponse> {

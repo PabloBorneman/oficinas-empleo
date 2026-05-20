@@ -56,6 +56,8 @@ async function initDatabase() {
       options TEXT,
       required INTEGER NOT NULL DEFAULT 0,
       field_order INTEGER NOT NULL DEFAULT 0,
+      chart_type TEXT NOT NULL DEFAULT 'auto',
+      include_in_report INTEGER NOT NULL DEFAULT 1,
       created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (form_id) REFERENCES forms(id) ON DELETE CASCADE
     );
@@ -115,6 +117,19 @@ async function initDatabase() {
 
   await addColumnIfNotExists(
     db,
+    'form_fields',
+    'chart_type',
+    "TEXT NOT NULL DEFAULT 'auto'"
+  );
+
+  await addColumnIfNotExists(
+    db,
+    'form_fields',
+    'include_in_report',
+    'INTEGER NOT NULL DEFAULT 1'
+  );
+  await addColumnIfNotExists(
+    db,
     'forms',
     'scope',
     "TEXT NOT NULL DEFAULT 'official'"
@@ -157,3 +172,4 @@ async function initDatabase() {
 module.exports = {
   initDatabase
 };
+
